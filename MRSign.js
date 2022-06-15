@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      0.4.2.9
+// @icon         https://www.agemys.com/favicon.ico
+// @updateURL    https://ghproxy.fsofso.com/https://github.com/qwe1187292926/MuRongManagementAssist/blob/main/MRSign.js
+// @version      0.2
 // @description  A script enhance MR attendance management
 // @author       NOBODY
 // @include      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005
