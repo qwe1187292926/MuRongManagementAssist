@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
+// @version      0.1
 // @icon         https://www.agemys.com/favicon.ico
-// @updateURL    https://ghproxy.fsofso.com/https://github.com/qwe1187292926/MuRongManagementAssist/blob/main/MRSign.js
-// @version      0.2
+// @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
+// @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
 // @description  A script enhance MR attendance management
 // @author       NOBODY
-// @include      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005
-// @include      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332015
-// @include      https://mis.murongtech.com/mrmis/login.do
-// @include      https://mis.murongtech.com/mrmis/
+// @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005
+// @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332015
+// @match      https://mis.murongtech.com/mrmis/login.do
+// @match      https://mis.murongtech.com/mrmis/
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
@@ -74,6 +75,7 @@ function setProductInfo(proId) {
         if (res.rec_num == "1") {
             console.log(res)
             var data = res.rec[0];
+            notify(data.pro_nm + "-" +data.att_man_nm)
             var table = $("#murong-table");
             table.bootstrapTable('checkAll');
             var rows = table.bootstrapTable('getSelections');
