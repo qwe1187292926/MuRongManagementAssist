@@ -43,23 +43,11 @@ let username = '', password = '';
     target.prepend('<input id="search_proid" placeholder="请输入项目名称/项目编号" style="margin-right: 5px" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
 
     target.find("#hoyoung_auto_setStatus").click(function () {
-        // 获取当前页
-        var data = $("#murong-table")
-        data.bootstrapTable('checkAll');
-        var rows = data.bootstrapTable('getSelections');
-        // 修改工作日为出勤
-        var length = rows.length;
-        for (var n = 1; n <= length; n++) {
-            var row = rows[n - 1];
-            // hld_flg 假日标记值 盲猜是holiday flag
-            if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
-        }
-        // 重新加载页面
-        refleshTable()
-        notify('已自动勾选工作日为出勤！');
+        setWorkStatus()
     })
     target.find('#hoyoung_set_product_data').click(function () {
         setProductInfo(target.find("#search_proid").val())
+        setWorkStatus()
     })
 })();
 
@@ -69,13 +57,30 @@ function refleshTable() {
     data.bootstrapTable('load', data.bootstrapTable('getData'))
 }
 
+function setWorkStatus(){
+    // 获取当前页
+    var data = $("#murong-table")
+    data.bootstrapTable('checkAll');
+    var rows = data.bootstrapTable('getSelections');
+    // 修改工作日为出勤
+    var length = rows.length;
+    for (var n = 1; n <= length; n++) {
+        var row = rows[n - 1];
+        // hld_flg 假日标记值 盲猜是holiday flag
+        if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
+    }
+    // 重新加载页面
+    refleshTable()
+    notify('已自动勾选工作日为出勤！');
+}
+
 function setProductInfo(proId) {
     $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do', "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId, function (res) {
         res = JSON.parse(res.responseText)
         if (res.rec_num == "1") {
             console.log(res)
             var data = res.rec[0];
-            notify(data.pro_nm + "-" +data.att_man_nm)
+            notify(data.pro_nm + "-" + data.att_man_nm)
             var table = $("#murong-table");
             table.bootstrapTable('checkAll');
             var rows = table.bootstrapTable('getSelections');
