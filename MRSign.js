@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      0.3
+// @version      0.4
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
 // @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
@@ -16,14 +16,14 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-// 出勤字典：var dict={"05":"婚假","04":"病假","03":"事假","02":"调休","01":"√","00":"未出勤","12":"居家办公","14":"育儿假","11":"远程","06":"丧假","07":"陪产假","08":"产假","13":"病休","10":"产检假","09":"年假"};
-// 工作日字典：var dict={"1":"休","0":"班"};
+// 出勤字典：let dict={"05":"婚假","04":"病假","03":"事假","02":"调休","01":"√","00":"未出勤","12":"居家办公","14":"育儿假","11":"远程","06":"丧假","07":"陪产假","08":"产假","13":"病休","10":"产检假","09":"年假"};
+// 工作日字典：let dict={"1":"休","0":"班"};
 // 0为工作日，1为休息日
-var WORK_DAY = "0";
-var ON_WORK = "01";
+const WORK_DAY = "0";
+const ON_WORK = "01";
 
 // 自动填充账户密码
-let username = '', password = '';
+const username = '', password = '';
 (function () {
     'use strict';
 
@@ -39,7 +39,7 @@ let username = '', password = '';
     welcome();
 
     // 初始化工具栏区域
-    var target = $("#toolbar");
+    const target = $("#toolbar");
     target.prepend(btnGenerator('hoyoung_auto_setStatus', '一键出勤', 'fa fa-plane'));
     target.prepend(btnGenerator('hoyoung_set_product_data', '一键同步项目到每行', ''));
     target.prepend('<input id="search_proid" placeholder="请输入项目名称/项目编号" style="margin-right: 5px" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
@@ -55,19 +55,19 @@ let username = '', password = '';
 
 function refleshTable() {
     // 此方式加载表格会导致分页异常，无法加载下一页。可以用筛选条件-初始化来解决。
-    var data = $("#murong-table")
+    const data = $("#murong-table")
     data.bootstrapTable('load', data.bootstrapTable('getData'))
 }
 
 function setWorkStatus(){
     // 获取当前页
-    var data = $("#murong-table")
+    const data = $("#murong-table")
     data.bootstrapTable('checkAll');
-    var rows = data.bootstrapTable('getSelections');
+    const rows = data.bootstrapTable('getSelections');
     // 修改工作日为出勤
-    var length = rows.length;
-    for (var n = 1; n <= length; n++) {
-        var row = rows[n - 1];
+    let length = rows.length;
+    for (let n = 1; n <= length; n++) {
+        let row = rows[n - 1];
         // hld_flg 假日标记值 盲猜是holiday flag
         if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
     }
@@ -81,21 +81,20 @@ function setProductInfo(proId) {
         res = JSON.parse(res.responseText)
         if (res.rec_num == "1") {
             console.log(res)
-            var data = res.rec[0];
-            notify(data.pro_nm + "-" + data.att_man_nm)
-            var table = $("#murong-table");
+            let data = res.rec[0];
+            const table = $("#murong-table");
             table.bootstrapTable('checkAll');
-            var rows = table.bootstrapTable('getSelections');
-            var length = rows.length;
-            for (var n = 1; n <= length; n++) {
-                var row = rows[n - 1];
-                for (key in data) {
+            const rows = table.bootstrapTable('getSelections');
+            const length = rows.length;
+            for (let n = 1; n <= length; n++) {
+                const row = rows[n - 1];
+                for (let key in data) {
                     eval("row." + key + "= data['" + key + "']")
                 }
             }
             refleshTable();
-            notify("已完成，成功的项目编号将自动保存");
             GM_setValue("proId", proId)
+            notify(`${proId} 项目编号已记录`)
         } else {
             console.log("ads", res)
             notify("项目查询结果包含多个或无结果！")
