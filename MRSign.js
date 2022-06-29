@@ -26,10 +26,19 @@ const ON_WORK = "01";
     'use strict';
 
     // 自动填充用户名密码
-    if (getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do') {
-        notify('已自动填充密码，可在脚本文件中配置账号密码');
-        $('#oper_no').val(String(username))
-        $('#oper_pwd1').val(String(password))
+    if (isLoginPage()) {
+        notify('已自动填充密码，可点击标题配置账号密码');
+        const un_ip = $('#oper_no')
+        const pwd_ip = $('#oper_pwd1')
+        un_ip.val(GM_getValue("un",""))
+        pwd_ip.val(GM_getValue("pwd",""))
+        // 标题事件
+        $('h3[class=form-title]').click(()=>{
+            GM_setValue("un",prompt("username"))
+            GM_setValue("pwd",prompt("password"))
+            un_ip.val(GM_getValue("un",""))
+            pwd_ip.val(GM_getValue("pwd",""))
+        })
         return
     }
 
@@ -50,6 +59,10 @@ const ON_WORK = "01";
         setWorkStatus()
     })
 })();
+
+function isLoginPage(){
+    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do'
+}
 
 function refleshTable() {
     // 此方式加载表格会导致分页异常，无法加载下一页。可以用筛选条件-初始化来解决。
