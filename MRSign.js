@@ -30,8 +30,8 @@ const ON_WORK = "01";
         notify('已自动填充密码，可点击标题配置账号密码');
         const un_ip = $('#oper_no')
         const pwd_ip = $('#oper_pwd1')
-        un_ip.val(GM_getValue("un", ""))
-        pwd_ip.val(GM_getValue("pwd", ""))
+        un_ip.val(GM_getValue("un",""))
+        pwd_ip.val(GM_getValue("pwd",""))
         // 标题事件
         $('h3[class=form-title]').click(() => {
             GM_setValue("un", prompt("username"))
@@ -55,7 +55,7 @@ const ON_WORK = "01";
     })
 })();
 
-function isLoginPage() {
+function isLoginPage(){
     return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do'
 }
 
@@ -65,7 +65,7 @@ function refleshTable() {
     data.bootstrapTable('load', data.bootstrapTable('getData'))
 }
 
-function setWorkStatus() {
+function setWorkStatus(){
     // 获取当前页
     const data = $("#murong-table")
     data.bootstrapTable('checkAll');
