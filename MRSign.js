@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      0.4
+// @version      0.5
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
 // @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
@@ -22,8 +22,6 @@
 const WORK_DAY = "0";
 const ON_WORK = "01";
 
-// 自动填充账户密码
-const username = '', password = '';
 (function () {
     'use strict';
 
