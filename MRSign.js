@@ -30,14 +30,14 @@ const ON_WORK = "01";
         notify('已自动填充密码，可点击标题配置账号密码');
         const un_ip = $('#oper_no')
         const pwd_ip = $('#oper_pwd1')
-        un_ip.val(GM_getValue("un",""))
-        pwd_ip.val(GM_getValue("pwd",""))
+        un_ip.val(GM_getValue("un", ""))
+        pwd_ip.val(GM_getValue("pwd", ""))
         // 标题事件
-        $('h3[class=form-title]').click(()=>{
-            GM_setValue("un",prompt("username"))
-            GM_setValue("pwd",prompt("password"))
-            un_ip.val(GM_getValue("un",""))
-            pwd_ip.val(GM_getValue("pwd",""))
+        $('h3[class=form-title]').click(() => {
+            GM_setValue("un", prompt("username"))
+            GM_setValue("pwd", prompt("password"))
+            un_ip.val(GM_getValue("un", ""))
+            pwd_ip.val(GM_getValue("pwd", ""))
         })
         return
     }
@@ -47,20 +47,15 @@ const ON_WORK = "01";
 
     // 初始化工具栏区域
     const target = $("#toolbar");
-    target.prepend(btnGenerator('hoyoung_auto_setStatus', '一键出勤', 'fa fa-plane'));
-    target.prepend(btnGenerator('hoyoung_set_product_data', '一键同步项目到每行', ''));
-    target.prepend('<input id="search_proid" placeholder="请输入项目名称/项目编号" style="margin-right: 5px" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
-
-    target.find("#hoyoung_auto_setStatus").click(function () {
-        setWorkStatus()
-    })
+    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'fa fa-rocket'));
+    target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
     target.find('#hoyoung_set_product_data').click(function () {
         setProductInfo(target.find("#search_proid").val())
         setWorkStatus()
     })
 })();
 
-function isLoginPage(){
+function isLoginPage() {
     return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do'
 }
 
@@ -70,7 +65,7 @@ function refleshTable() {
     data.bootstrapTable('load', data.bootstrapTable('getData'))
 }
 
-function setWorkStatus(){
+function setWorkStatus() {
     // 获取当前页
     const data = $("#murong-table")
     data.bootstrapTable('checkAll');
@@ -83,37 +78,39 @@ function setWorkStatus(){
         if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
     }
     // 重新加载页面
-    refleshTable()
+    refleshTable();
     notify('已自动勾选工作日为出勤！');
 }
 
 function setProductInfo(proId) {
-    $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do', "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId, function (res) {
-        res = JSON.parse(res.responseText)
-        if (res.rec_num == "1") {
-            console.log(res)
-            let data = res.rec[0];
-            const table = $("#murong-table");
-            table.bootstrapTable('checkAll');
-            const rows = table.bootstrapTable('getSelections');
-            const length = rows.length;
-            for (let n = 1; n <= length; n++) {
-                const row = rows[n - 1];
-                for (let key in data) {
-                    eval("row." + key + "= data['" + key + "']")
+    $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do',
+        "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId,
+        function (res) {
+            res = JSON.parse(res.responseText)
+            if (res.rec_num == "1") {
+                console.log(res)
+                let data = res.rec[0];
+                const table = $("#murong-table");
+                table.bootstrapTable('checkAll');
+                const rows = table.bootstrapTable('getSelections');
+                const length = rows.length;
+                for (let n = 1; n <= length; n++) {
+                    const row = rows[n - 1];
+                    for (let key in data) {
+                        eval("row." + key + "= data['" + key + "']")
+                    }
                 }
+                refleshTable();
+                GM_setValue("proId", proId);
+                notify(`${proId} 项目编号已记录`);
+            } else {
+                console.log("ads", res)
+                notify("项目查询结果包含多个或无结果！");
             }
-            refleshTable();
-            GM_setValue("proId", proId)
-            notify(`${proId} 项目编号已记录`)
-        } else {
-            console.log("ads", res)
-            notify("项目查询结果包含多个或无结果！")
-        }
-    }, function (res) {
-        console.log(res)
-        notify("请求失败，详见控制台！")
-    })
+        }, function (res) {
+            console.log(res);
+            notify("请求失败，详见控制台！");
+        })
 }
 
 function $HTTP(method, url, data, onSuccess, onFailed) {
