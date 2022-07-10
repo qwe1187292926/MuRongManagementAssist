@@ -64,9 +64,9 @@ let savedUsers = {};
         selectData += `<option value=${keys[i]}>${values[i]}</option>`
     }
     selectData += `</select>`
-    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'fa fa-rocket'))
+    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'fa fa-check-square-o'))
     target.prepend(selectData)
-    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'fa fa-check-square-o'));
+    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'fa fa-rocket'));
     target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px;max-width: 8rem" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
     target.find('#hoyoung_set_product_data').click(function () {
         setProductInfo(target.find("#search_proid").val())
