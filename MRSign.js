@@ -57,6 +57,8 @@ let savedUsers = {};
 
     // 初始化工具栏区域
     const target = $("#toolbar");
+
+    // 自定义出勤状态的生成区域
     let selectData = `<select name="chk_sts" id="hoyoung_status_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 5rem">`
     let keys = Object.keys(WORK_DICT)
     let values = Object.values(WORK_DICT)
@@ -64,47 +66,28 @@ let savedUsers = {};
         selectData += `<option value=${keys[i]}>${values[i]}</option>`
     }
     selectData += `</select>`
-    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'fa fa-check-square-o'))
+    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'blue-stripe','fa fa-check-square-o','将选中行应用这个出勤状态'))
     target.prepend(selectData)
-    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'fa fa-rocket'));
+
+    // 智慧填充的生成区域
+    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'green-stripe','fa fa-rocket','将该项目编号填入到所有项目，并自动勾选出勤状态'));
     target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px;max-width: 8rem" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
+
+    // 添加事件
     target.find('#hoyoung_set_product_data').click(function () {
         setProductInfo(target.find("#search_proid").val())
         setWorkStatus()
     })
     target.find('#hoyoung_set_status_data').click(function () {
-        // 修改工作日为出勤
-        const rows = $("#murong-table").bootstrapTable('getSelections');
-        let length = rows.length;
-        for (let n = 1; n <= length; n++) {
-            let row = rows[n - 1];
-            // hld_flg 假日标记值 盲猜是holiday flag
-            // if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
-            row.att_typ = target.find("#hoyoung_status_data").val()
-        }
-        refreshTable()
+        setWorkStatus(target.find("#hoyoung_status_data").val());
     })
 })();
 
-function isLoginPage(){
-    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do' || getLocation() == 'https://mis.murongtech.com/mrmis/logOut.do'
-}
 
-function setLoginUserData(username,password){
-    $.ajax({
-        url: "/mrmis/common/srand_num.jsp?"
-            + new Date().getTime(),
-        type: "POST",
-        async: false,
-        success: function (srand_num) {
-            console.log("1234")
-            loginUser.oper_pwd = strEnc(password, srand_num);
-            loginUser.oper_no = username;
-            loginUser.rad = srand_num;
-        }
-    });
-}
-
+/**
+ * 获取保存的全部用户
+ * 该方法用于一键登录
+ */
 function getSavedUsers(){
     let raw = GM_getValue('save_users', "");
     let users = raw.split("|");
@@ -114,29 +97,43 @@ function getSavedUsers(){
     }
 }
 
-function refreshTable() {
-    // 此方式加载表格会导致分页异常，无法加载下一页。可以用筛选条件-初始化来解决。
-    const data = $("#murong-table")
-    data.bootstrapTable('load', data.bootstrapTable('getData'))
-}
-
-function setWorkStatus(){
+/**
+ * 设置出勤
+ * @param att 出勤值，可参考全局变量，为空时自动判断
+ */
+function setWorkStatus(att = ""){
     // 获取当前页
     const data = $("#murong-table")
-    data.bootstrapTable('checkAll');
+    // 无参数时全选
+    if (att==""){
+        data.bootstrapTable('checkAll');
+    }
     const rows = data.bootstrapTable('getSelections');
     // 修改工作日为出勤
     let length = rows.length;
     for (let n = 1; n <= length; n++) {
         let row = rows[n - 1];
         // hld_flg 假日标记值 盲猜是holiday flag
-        if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
+        // 无参数 工作日上班 休息日休息
+        if (att==""){
+            if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
+        }else {
+            row.att_typ = att
+        }
     }
     // 重新加载页面
     refreshTable();
-    notify('已自动勾选工作日为出勤！');
+    if (att=="") {
+        notify('已自动勾选工作日为出勤！');
+    }else {
+        notify('选中行已勾选指定状态')
+    }
 }
 
+/**
+ * 填充项目信息，并自动出勤
+ * @param proId
+ */
 function setProductInfo(proId) {
     $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do',
         "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId,
@@ -168,13 +165,21 @@ function setProductInfo(proId) {
         })
 }
 
+/**
+ * 自定义http发送器
+ * @param method post, get
+ * @param url String
+ * @param data
+ * @param onSuccess function
+ * @param onFailed function
+ */
 function $HTTP(method, url, data, onSuccess, onFailed) {
     GM_xmlhttpRequest({
         method: method,
         url: url,
         data: data,
         headers: {
-            "Referer": "https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005",
+            "Referer": getLocation(),
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "Cookie": document.cookie
         },
@@ -184,9 +189,43 @@ function $HTTP(method, url, data, onSuccess, onFailed) {
     });
 }
 
+/**
+ * 模拟登录方法 - 最外层
+ * @param username
+ * @param password
+ */
 function login(username,password) {
     setLoginUserData(username,password);
     moniFormSubmit("https://mis.murongtech.com/mrmis/login.do",loginUser)
+}
+
+/**
+ * 将用户名密码加密
+ * @param username
+ * @param password
+ */
+function setLoginUserData(username,password){
+    $.ajax({
+        url: "/mrmis/common/srand_num.jsp?"
+            + new Date().getTime(),
+        type: "POST",
+        async: false,
+        success: function (srand_num) {
+            console.log("1234")
+            loginUser.oper_pwd = strEnc(password, srand_num);
+            loginUser.oper_no = username;
+            loginUser.rad = srand_num;
+        }
+    });
+}
+
+/**
+ * 刷新表格 ⚠会导致默认翻页失效⚠
+ */
+function refreshTable() {
+    // 此方式加载表格会导致分页异常，无法加载下一页。可以用筛选条件-初始化来解决。
+    const data = $("#murong-table")
+    data.bootstrapTable('load', data.bootstrapTable('getData'))
 }
 
 function moniFormSubmit(url,args) {
@@ -209,17 +248,40 @@ function getLocation() {
     return location.toString();
 }
 
-function btnGenerator(id, text, custom_icon) {
-    return $("<button class='btn btn-primary green-stripe' style='margin-left: 10px' id='" + id + "'><i class='" + custom_icon + "'/> " + text + "</button><span style='display: inline-block;margin: 0 2rem;border-left: 2px solid #8080805e;'>1</span>")
+/**
+ * 生成带样式的按钮
+ * @param id  按钮id
+ * @param text  文本
+ * @param bColor  边框颜色
+ * @param custom_icon  awesome icon
+ * @returns {*|jQuery|HTMLElement}
+ */
+function btnGenerator(id, text, bColor="",custom_icon="",btnHint='') {
+    return $(`<button class='btn btn-primary ${bColor}' title=${btnHint} style='margin-left: 10px' id='${id}'><i class='${custom_icon}'/> ${text}</button><span style='display: inline-block;margin: 0 2rem;border-left: 2px solid #8080805e;'>1</span>`)
 }
 
+/**
+ * 欢迎
+ */
 function welcome() {
     notify('智能出勤脚本加载成功！');
 }
 
+/**
+ * 通知
+ * @param msg 消息
+ */
 function notify(msg) {
     Messenger().post({
         singleton: true,
         message: msg
     });
+}
+
+/**
+ * 是否登录页
+ * @returns {boolean}
+ */
+function isLoginPage(){
+    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do' || getLocation() == 'https://mis.murongtech.com/mrmis/logOut.do'
 }
