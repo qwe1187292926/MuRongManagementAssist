@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      0.8
+// @version      0.9
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
 // @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
@@ -11,16 +11,26 @@
 // @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332015
 // @match      https://mis.murongtech.com/mrmis/login.do
 // @match      https://mis.murongtech.com/mrmis/
+// @match      https://mis.murongtech.com/mrmis/logOut.do
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-// 出勤字典：let dict={"05":"婚假","04":"病假","03":"事假","02":"调休","01":"√","00":"未出勤","12":"居家办公","14":"育儿假","11":"远程","06":"丧假","07":"陪产假","08":"产假","13":"病休","10":"产检假","09":"年假"};
 // 工作日字典：let dict={"1":"休","0":"班"};
 // 0为工作日，1为休息日
 const WORK_DAY = "0";
 const ON_WORK = "01";
+let WORK_DICT={"05":"婚假","04":"病假","03":"事假","02":"调休","01":"√","00":"未出勤","12":"居家办公","14":"育儿假","11":"远程","06":"丧假","07":"陪产假","08":"产假","13":"病休","10":"产检假","09":"年假"};
+
+let loginUser = {
+    oper_no:"",
+    oper_pwd:"",
+    oper_log_mod:"1",
+    rad:""
+};
+
+let savedUsers = {};
 
 (function () {
     'use strict';
@@ -47,19 +57,64 @@ const ON_WORK = "01";
 
     // 初始化工具栏区域
     const target = $("#toolbar");
-    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'fa fa-rocket'));
-    target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
+    let selectData = `<select name="chk_sts" id="hoyoung_status_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 5rem">`
+    let keys = Object.keys(WORK_DICT)
+    let values = Object.values(WORK_DICT)
+    for (let i=0;i<keys.length;i++) {
+        selectData += `<option value=${keys[i]}>${values[i]}</option>`
+    }
+    selectData += `</select>`
+    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'fa fa-rocket'))
+    target.prepend(selectData)
+    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'fa fa-check-square-o'));
+    target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px;max-width: 8rem" class="m-wrap span5" type="text" value="' + GM_getValue("proId", "") + '"/>');
     target.find('#hoyoung_set_product_data').click(function () {
         setProductInfo(target.find("#search_proid").val())
         setWorkStatus()
     })
+    target.find('#hoyoung_set_status_data').click(function () {
+        // 修改工作日为出勤
+        const rows = $("#murong-table").bootstrapTable('getSelections');
+        let length = rows.length;
+        for (let n = 1; n <= length; n++) {
+            let row = rows[n - 1];
+            // hld_flg 假日标记值 盲猜是holiday flag
+            // if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
+            row.att_typ = target.find("#hoyoung_status_data").val()
+        }
+        refreshTable()
+    })
 })();
 
 function isLoginPage(){
-    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do'
+    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do' || getLocation() == 'https://mis.murongtech.com/mrmis/logOut.do'
 }
 
-function refleshTable() {
+function setLoginUserData(username,password){
+    $.ajax({
+        url: "/mrmis/common/srand_num.jsp?"
+            + new Date().getTime(),
+        type: "POST",
+        async: false,
+        success: function (srand_num) {
+            console.log("1234")
+            loginUser.oper_pwd = strEnc(password, srand_num);
+            loginUser.oper_no = username;
+            loginUser.rad = srand_num;
+        }
+    });
+}
+
+function getSavedUsers(){
+    let raw = GM_getValue('save_users', "");
+    let users = raw.split("|");
+    for (const user in users) {
+        let userArray = user.split("：")
+        eval("savedUsers."+ userArray[0] + " = " + userArray[1])
+    }
+}
+
+function refreshTable() {
     // 此方式加载表格会导致分页异常，无法加载下一页。可以用筛选条件-初始化来解决。
     const data = $("#murong-table")
     data.bootstrapTable('load', data.bootstrapTable('getData'))
@@ -78,7 +133,7 @@ function setWorkStatus(){
         if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
     }
     // 重新加载页面
-    refleshTable();
+    refreshTable();
     notify('已自动勾选工作日为出勤！');
 }
 
@@ -100,7 +155,7 @@ function setProductInfo(proId) {
                         eval("row." + key + "= data['" + key + "']")
                     }
                 }
-                refleshTable();
+                refreshTable();
                 GM_setValue("proId", proId);
                 notify(`${proId} 项目编号已记录`);
             } else {
@@ -129,12 +184,33 @@ function $HTTP(method, url, data, onSuccess, onFailed) {
     });
 }
 
+function login(username,password) {
+    setLoginUserData(username,password);
+    moniFormSubmit("https://mis.murongtech.com/mrmis/login.do",loginUser)
+}
+
+function moniFormSubmit(url,args) {
+    var body = $(document.body),//目标容器
+        form = $("<form method='post'></form>"),//虚拟表单创建
+        input;//表单
+    form.attr({"action": url});//url
+    $.each(args, function (key, value) { //遍历
+        input = $("<input type='hidden'>");
+        input.attr({"name": key});
+        input.val(value);
+        form.append(input);
+    });
+
+    form.appendTo(document.body);//插入
+    form.submit();//提交
+}
+
 function getLocation() {
     return location.toString();
 }
 
 function btnGenerator(id, text, custom_icon) {
-    return $("<button class='btn btn-primary' id='" + id + "' style='margin-right: 15px'><i class='" + custom_icon + "'/> " + text + "</button>")
+    return $("<button class='btn btn-primary green-stripe' style='margin-left: 10px' id='" + id + "'><i class='" + custom_icon + "'/> " + text + "</button><span style='display: inline-block;margin: 0 2rem;border-left: 2px solid #8080805e;'>1</span>")
 }
 
 function welcome() {
