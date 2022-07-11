@@ -40,23 +40,50 @@ let savedUsers = {};
         notify('已自动填充密码，可点击标题配置账号密码');
         const un_ip = $('#oper_no')
         const pwd_ip = $('#oper_pwd1')
+        const login_btn = $($('button[type=submit]')[0])
+        let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
+        clearSavedUserData.click(clearSavedUsers);
+        $($('a[data-toggle]')[0]).parent().parent().append(clearSavedUserData)
+        login_btn.removeAttr('type')
         un_ip.val(GM_getValue("un",""))
         pwd_ip.val(GM_getValue("pwd",""))
         // 标题事件
-        $('h3[class=form-title]').click(() => {
-            GM_setValue("un", prompt("username"))
-            GM_setValue("pwd", prompt("password"))
-            un_ip.val(GM_getValue("un", ""))
-            pwd_ip.val(GM_getValue("pwd", ""))
+        login_btn.click((event)=> {
+            event.preventDefault()
+            initSavedUsers()
+            const username = $('#oper_no').val()
+            const password = $('#oper_pwd1').val()
+            if (username in savedUsers){
+                let oPassword = eval("savedUsers." + username)
+                // 更新密码
+                if (password != oPassword){
+                    setSavedUsers(username,password)
+                }
+            }else {
+                setSavedUsers(username,password)
+            }
+            console.log(savedUsers)
+            login(username,password)
         })
-        return
+        return;
     }
-
     // 欢迎
     welcome();
 
     // 初始化工具栏区域
     const target = $("#toolbar");
+
+    // 切换账号的生成区域
+    initSavedUsers()
+    let userSelectData = `<select name="chk_sts" id="hoyoung_user_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 8rem">`
+    let userKeys = Object.keys(savedUsers)
+    let userValues = Object.values(savedUsers)
+    for (let i=0;i<userKeys.length;i++) {
+        userSelectData += `<option value=${userValues[i]}>${userKeys[i]}</option>`
+    }
+    userSelectData += `</select>`
+    target.prepend(btnGenerator('hoyoung_login_user', ' 切换', 'blue-stripe','fa fa-user','切换账号'))
+    target.prepend(userSelectData)
 
     // 自定义出勤状态的生成区域
     let selectData = `<select name="chk_sts" id="hoyoung_status_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 5rem">`
@@ -66,7 +93,7 @@ let savedUsers = {};
         selectData += `<option value=${keys[i]}>${values[i]}</option>`
     }
     selectData += `</select>`
-    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'blue-stripe','fa fa-check-square-o','将选中行应用这个出勤状态'))
+    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'yellow-stripe','fa fa-check-square-o','将选中行应用这个出勤状态'))
     target.prepend(selectData)
 
     // 智慧填充的生成区域
@@ -81,6 +108,10 @@ let savedUsers = {};
     target.find('#hoyoung_set_status_data').click(function () {
         setWorkStatus(target.find("#hoyoung_status_data").val());
     })
+    target.find('#hoyoung_login_user').click(function () {
+
+        login(target.find("#hoyoung_user_data option:selected").text(),target.find("#hoyoung_user_data").val());
+    })
 })();
 
 
@@ -88,13 +119,45 @@ let savedUsers = {};
  * 获取保存的全部用户
  * 该方法用于一键登录
  */
-function getSavedUsers(){
+function initSavedUsers(){
     let raw = GM_getValue('save_users', "");
     let users = raw.split("|");
+    console.log(users)
     for (const user in users) {
-        let userArray = user.split("：")
-        eval("savedUsers."+ userArray[0] + " = " + userArray[1])
+        if (users[user] == "") break;
+        let userArray = users[user].split("：")
+        console.log(userArray)
+        eval("savedUsers."+ userArray[0] + " = '" + userArray[1]+"'")
     }
+    console.log(savedUsers)
+}
+
+/**
+ * 添加一个用户
+ * @param username
+ * @param password
+ */
+function setSavedUsers(username,password){
+    if (savedUsers.length==0){
+        initSavedUsers();
+    }
+    eval("savedUsers." + username + "='" +password+"'")
+    let userKeys = Object.keys(savedUsers)
+    let userValues = Object.values(savedUsers)
+    let saved_users_string = ""
+    for (let i=0;i<userKeys.length;i++) {
+        saved_users_string += userKeys[i] + "：" +userValues[i]+"|"
+    }
+    GM_setValue("save_users", saved_users_string);
+}
+
+/**
+ * 清除保存的用户数据
+ */
+function clearSavedUsers(){
+    savedUsers = {}
+    GM_setValue("save_users", "");
+    notify("数据已清除")
 }
 
 /**
