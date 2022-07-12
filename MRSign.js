@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      0.9
+// @version      1.0
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
 // @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
@@ -35,22 +35,28 @@ let savedUsers = {};
 (function () {
     'use strict';
 
+    initSavedUsers()
+    let userKeys = Object.keys(savedUsers)
+    let userValues = Object.values(savedUsers)
+
     // 自动填充用户名密码
     if (isLoginPage()) {
-        notify('已自动填充密码，可点击标题配置账号密码');
+        notify('已自动填充账户密码');
         const un_ip = $('#oper_no')
         const pwd_ip = $('#oper_pwd1')
         const login_btn = $($('button[type=submit]')[0])
         let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
+        let logSavedUserData = $(`<a style="margin-left: 1rem">查看保存的用户名与密码</a>`)
         clearSavedUserData.click(clearSavedUsers);
+        logSavedUserData.click(()=>{console.log("保存的用户和密码",savedUsers)})
         $($('a[data-toggle]')[0]).parent().parent().append(clearSavedUserData)
+        $($('a[data-toggle]')[0]).parent().parent().append(logSavedUserData)
         login_btn.removeAttr('type')
-        un_ip.val(GM_getValue("un",""))
-        pwd_ip.val(GM_getValue("pwd",""))
+        pwd_ip.val(userValues[0])
+        un_ip.val(userKeys[0])
         // 标题事件
         login_btn.click((event)=> {
             event.preventDefault()
-            initSavedUsers()
             const username = $('#oper_no').val()
             const password = $('#oper_pwd1').val()
             if (username in savedUsers){
@@ -74,10 +80,8 @@ let savedUsers = {};
     const target = $("#toolbar");
 
     // 切换账号的生成区域
-    initSavedUsers()
+
     let userSelectData = `<select name="chk_sts" id="hoyoung_user_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 8rem">`
-    let userKeys = Object.keys(savedUsers)
-    let userValues = Object.values(savedUsers)
     for (let i=0;i<userKeys.length;i++) {
         userSelectData += `<option value=${userValues[i]}>${userKeys[i]}</option>`
     }
@@ -129,7 +133,6 @@ function initSavedUsers(){
         console.log(userArray)
         eval("savedUsers."+ userArray[0] + " = '" + userArray[1]+"'")
     }
-    console.log(savedUsers)
 }
 
 /**
@@ -139,7 +142,7 @@ function initSavedUsers(){
  */
 function setSavedUsers(username,password){
     if (savedUsers.length==0){
-        initSavedUsers();
+        ;
     }
     eval("savedUsers." + username + "='" +password+"'")
     let userKeys = Object.keys(savedUsers)
@@ -202,9 +205,9 @@ function setProductInfo(proId) {
         "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId,
         function (res) {
             res = JSON.parse(res.responseText)
-            if (res.rec_num == "1") {
+            let data = res.rec[0];
+            if (res.rec_num == "1" || confirm(`当前项目包含多个项目编号，是否选用最相近的名称：《${data.pro_nm}》`)) {
                 console.log(res)
-                let data = res.rec[0];
                 const table = $("#murong-table");
                 table.bootstrapTable('checkAll');
                 const rows = table.bootstrapTable('getSelections');
