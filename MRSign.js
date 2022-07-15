@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      1.0
+// @version      1.1
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
 // @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
@@ -11,6 +11,7 @@
 // @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332015
 // @match      https://mis.murongtech.com/mrmis/login.do
 // @match      https://mis.murongtech.com/mrmis/
+// @match      https://mis.murongtech.com/mrmis/toHome.do
 // @match      https://mis.murongtech.com/mrmis/logOut.do
 // @require      https://mis.murongtech.com/mrmis/js/bootstrap-datatable/bootstrap-table.js?t=202009080152320
 // @grant        GM_getValue
@@ -85,7 +86,7 @@ function saveMRCfg() {
             un_ip.val(MRCfg.defaultLoginUser.username)
         }
 
-        if (MRCfg.savedUsers.length>1&&MRCfg.defaultLoginUser.password=="") notify("你可以点击标题设置自动填充登录用户！")
+        if (MRCfg.savedUsers.length>1&&MRCfg.defaultLoginUser.password=="") notify("你可以点击标题设置自动填充登录用户或者进行多账号管理！")
 
         const login_btn = $($('button[type=submit]')[0])
         let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
@@ -130,7 +131,11 @@ function saveMRCfg() {
     const target = $("#toolbar");
 
     // 切换账号的生成区域
-    target.prepend(btnGenerator('hoyoung_login_user', ' 切换账号', 'blue-stripe', 'fa fa-user', '切换账号'))
+    target.prepend(btnGenerator('hoyoung_login_user', ' 多账号管理', 'blue-stripe', 'fa fa-user', '切换账号'))
+
+    let li = `<li id="multiAccount"><a href="#"> <i class="icon-envelope"></i> 多账号管理</a></li>`
+    $('li.user ul.dropdown-menu').append(li)
+
 
     // 自定义出勤状态的生成区域
     let selectData = `<select name="chk_sts" id="hoyoung_status_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 5rem">`
@@ -156,10 +161,13 @@ function saveMRCfg() {
     // 选中行
     target.find('#hoyoung_set_status_data').click(function () {
         // setWorkStatus(target.find("#hoyoung_status_data").val());
-
+        initConditionApply()
     })
     // 切换账号
     target.find('#hoyoung_login_user').click(function () {
+        initTableSavedUsers()
+    })
+    $('#multiAccount').click(()=>{
         initTableSavedUsers()
     })
 })();
@@ -171,14 +179,18 @@ function saveMRCfg() {
  */
 function setSavedUsers(username, password) {
     console.log(username, password)
-    let object = {index: MRCfg.savedUsers.length, username: username, password: password}
+    let object = {username: username, password: password}
     MRCfg.savedUsers.push(object)
     saveMRCfg()
 }
 
-function delSavedUser(index) {
-    MRCfg.savedUsers.pop(index)
+function delSavedUser(name) {
+    MRCfg.savedUsers.splice(getIndexOfUser(name),1)
     saveMRCfg()
+}
+
+function getIndexOfUser(name){
+    return MRCfg.savedUsers.findIndex(o => o.username === name);
 }
 
 /**
@@ -283,12 +295,19 @@ function $HTTP(method, url, data, onSuccess, onFailed) {
     });
 }
 
-function customMyModelView(html) {
+function customMyModelView(html,title) {
     if ($('#hoyoungModal').length == 0) {
         let modelTemplate = `
     <div aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" id="hoyoungModal" class="modal fade ui-draggable in" style="display: block;">
         <div class="modal-dialog" style="width: 600px;">
+        <div class="portlet box blue">
+        <div class="portlet-title">
+            <div class="caption"><i class="icon-reorder"></i><span id="closeM">${title}</span></div>
+        </div>
+        <div class="portlet-body modal-body" id="mmmmodal-body">
             ${html}
+        </div>
+        </div>
         </div>
     </div>`
         $('body').append(modelTemplate)
@@ -297,29 +316,32 @@ function customMyModelView(html) {
         })
 
     } else {
-        $('#hoyoungModal').html(html)
+        $('#closeM').text(title)
+        $('#mmmmodal-body').html(html)
         $('#hoyoungModal').show()
     }
 
 
 }
 
-//TODO 给他整个标题
-function initTest() {
-    customMyModelView(`<div class="portlet box blue"><div class="portlet-title"><div class="caption"><i class="icon-reorder"></i><span id="closeM">切换登录用户 - 点我关闭</span></div></div><div class="portlet-body modal-body"><table class="murong-table table table-hover" id="hoyoung_table"
-                  data-toggle="table" data-click-to-select="true" 
-                  data-show-columns="false" 
-                  data-select-item-name="myRadioName">
-                </table>
-            </div>
-        </div>`)
+function initConditionApply() {
+    customMyModelView(`
+        <div style="display: flex;justify-content: space-between">
+        <div class="span3">
+           <label class="btn red-stripe">* 考勤月份</label>
+               <span class="input-group  custom-date-range form-inline" data-date="201601" data-date-format="yyyyMM">
+                  <input class="span5 m-wrap form-control date-picker dpd1" id="att_month" data-date-format="yyyy-mm" name="att_month" placeholder="" type="text" value="2022-07" required="">
+               </span>
+        </div>
+</div>
+    `,"根据条件应用 - 点我关闭")
 }
 
 /**
  * 初始化切换账号的显示
  */
 function initTableSavedUsers() {
-    customMyModelView(`<div class="portlet box blue"><div class="portlet-title"><div class="caption"><i class="icon-reorder"></i><span id="closeM">切换登录用户 - 点我关闭</span></div></div><div class="portlet-body modal-body">
+    customMyModelView(`
                 <div style="display: flex;justify-content: space-between;flex-wrap: wrap;">
                     <button class="btn btn-primary" id="hoyoung_set_dfl_login_user"><i class="fa fa-check-square-o"></i>  默认登录用户</button>
                     <button class="btn btn-primary" id="hoyoung_login"><i class="fa fa-check-square-o"></i>  Login</button>
@@ -329,9 +351,7 @@ function initTableSavedUsers() {
                   data-toggle="table" data-click-to-select="true" 
                   data-show-columns="false" 
                   data-select-item-name="myRadioName">
-                </table>
-            </div>
-        </div>`)
+                </table>`,"切换登录用户 - 点我关闭")
     $table = $('#hoyoung_table')
     $table.on('click-row.bs.table', function (e, row, $element) {
         $('.success').removeClass('success');
@@ -360,7 +380,7 @@ function initTableSavedUsers() {
         $($element).addClass('success');
     });
 
-    $table.bootstrapTable('load', convertSavedUser2Array());
+    $table.bootstrapTable('load', getWarpedSavedUsers());
 
     $('#hoyoung_set_dfl_login_user').click(function () {
         let result = $table.bootstrapTable('getSelections');
@@ -368,9 +388,9 @@ function initTableSavedUsers() {
             notify("坑爹呢，你默认登录这么多个用户吗？")
         }else {
             for (let i = 0; i < result.length; i++) {
-                MRCfg.defaultLoginUser = MRCfg.savedUsers[result[i].index]
+                MRCfg.defaultLoginUser = MRCfg.savedUsers[getIndexOfUser(result[i].username)]
                 saveMRCfg()
-                notify("默认账号已设置为："+MRCfg.savedUsers[result[i].index].username)
+                notify("默认账号已设置为："+result[i].username)
             }
         }
     })
@@ -379,20 +399,21 @@ function initTableSavedUsers() {
         if (result.length > 1){
             notify("坑爹呢，你默认登录这么多个用户吗？")
         }else {
-            for (let i = 0; i < result.length; i++) {
-                login(MRCfg.savedUsers[i].username, MRCfg.savedUsers[i].password)
-                $('#hoyoungModal').hide();
-            }
+            login(result[0].username, MRCfg.savedUsers[getIndexOfUser(result[0].username)].password)
         }
 
     })
     $('#hoyoung_del_user').click(function () {
         let result = $table.bootstrapTable('getSelections');
         for (let i = 0; i < result.length; i++) {
-            delSavedUser(result[i].index)
-            $table.bootstrapTable('load', convertSavedUser2Array());
+            delSavedUser(result[i].username)
         }
+        $table.bootstrapTable('load', MRCfg.savedUsers);
     })
+}
+
+function getWarpedSavedUsers() {
+    return MRCfg.savedUsers.concat()
 }
 
 /**
@@ -452,12 +473,6 @@ function moniFormSubmit(url, args) {
 
 function getLocation() {
     return location.toString();
-}
-
-
-function convertSavedUser2Array() {
-
-    return MRCfg.savedUsers
 }
 
 /**
