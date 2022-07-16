@@ -3,8 +3,8 @@
 // @namespace    hoyoung.assist.att.sDay
 // @version      1.1
 // @icon         https://www.agemys.com/favicon.ico
-// @updateURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
-// @downloadURL    https://raw.githubusercontent.com/qwe1187292926/MuRongManagementAssist/main/MRSign.js
+// @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRSign.js
+// @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRSign.js
 // @description  A script enhance MR attendance management
 // @author       NOBODY
 // @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005
@@ -49,9 +49,11 @@ let loginUser = {
 };
 
 let MRCfg = {
+    resetFirstLoadRows: 0,
     defaultLoginUser: {username: "", password: ""},
     savedUsers: [],
-    proId: ""
+    proId: "",
+    welcomeWords: "智能出勤脚本加载成功！"
 }
 
 function initMRCfg() {
@@ -59,7 +61,7 @@ function initMRCfg() {
     if (saved == "") {
         GM_setValue("MR_CONFIG", MRCfg)
     } else {
-        mergeObject(saved,MRCfg)
+        mergeObject(saved, MRCfg)
     }
     MRCfg = saved
 }
@@ -80,13 +82,13 @@ function saveMRCfg() {
         const un_ip = $('#oper_no')
         const pwd_ip = $('#oper_pwd1')
 
-        if (MRCfg.defaultLoginUser.password!="" && MRCfg.defaultLoginUser.username!="") {
+        if (MRCfg.defaultLoginUser.password != "" && MRCfg.defaultLoginUser.username != "") {
             notify('已自动填充默认登录账号');
             pwd_ip.val(MRCfg.defaultLoginUser.password)
             un_ip.val(MRCfg.defaultLoginUser.username)
         }
 
-        if (MRCfg.savedUsers.length>1&&MRCfg.defaultLoginUser.password=="") notify("你可以点击标题设置自动填充登录用户或者进行多账号管理！")
+        if (MRCfg.savedUsers.length > 1 && MRCfg.defaultLoginUser.password == "") notify("你可以点击标题设置自动填充登录用户或者进行多账号管理！")
 
         const login_btn = $($('button[type=submit]')[0])
         let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
@@ -131,10 +133,12 @@ function saveMRCfg() {
     const target = $("#toolbar");
 
     // 切换账号的生成区域
-    target.prepend(btnGenerator('hoyoung_login_user', ' 多账号管理', 'blue-stripe', 'fa fa-user', '切换账号'))
+    let li = `<li id="multiAccount"><a href="#"><i class="icon-user"></i>多账号管理</a></li>`
+    $('ul.nav li.user').before(li)
 
-    let li = `<li id="multiAccount"><a href="#"> <i class="icon-envelope"></i> 多账号管理</a></li>`
-    $('li.user ul.dropdown-menu').append(li)
+    // 脚本设置的生成区域
+    li = `<li id="hoyoung_setting"><a href="#"><i class="icon-cogs"></i>脚本设置</a></li>`
+    $('ul.nav li.user').before(li)
 
 
     // 自定义出勤状态的生成区域
@@ -164,12 +168,18 @@ function saveMRCfg() {
         initConditionApply()
     })
     // 切换账号
-    target.find('#hoyoung_login_user').click(function () {
+    $('#multiAccount').click(() => {
         initTableSavedUsers()
     })
-    $('#multiAccount').click(()=>{
-        initTableSavedUsers()
+    $('#hoyoung_setting').click(() => {
+        initSettingModal()
     })
+
+    if (MRCfg.resetFirstLoadRows != 0) {
+        $('table#murong-table').bootstrapTable('getOptions').pageSize = MRCfg.resetFirstLoadRows;
+        conditionQuery();
+    }
+
 })();
 
 /**
@@ -185,11 +195,11 @@ function setSavedUsers(username, password) {
 }
 
 function delSavedUser(name) {
-    MRCfg.savedUsers.splice(getIndexOfUser(name),1)
+    MRCfg.savedUsers.splice(getIndexOfUser(name), 1)
     saveMRCfg()
 }
 
-function getIndexOfUser(name){
+function getIndexOfUser(name) {
     return MRCfg.savedUsers.findIndex(o => o.username === name);
 }
 
@@ -295,8 +305,11 @@ function $HTTP(method, url, data, onSuccess, onFailed) {
     });
 }
 
-function customMyModelView(html,title) {
+let modalCurView = ""
+
+function customMyModelView(html, title) {
     if ($('#hoyoungModal').length == 0) {
+        modalCurView = title
         let modelTemplate = `
     <div aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" id="hoyoungModal" class="modal fade ui-draggable in" style="display: block;">
         <div class="modal-dialog" style="width: 600px;">
@@ -311,16 +324,21 @@ function customMyModelView(html,title) {
         </div>
     </div>`
         $('body').append(modelTemplate)
+        $('#hoyoungModal').hide();
+        $('#hoyoungModal').modal('show');
         $('#closeM').click(() => {
-            $('#hoyoungModal').hide()
+            $('#hoyoungModal').modal('hide');
         })
 
     } else {
-        $('#closeM').text(title)
-        $('#mmmmodal-body').html(html)
-        $('#hoyoungModal').show()
+        // 缓存相等不修改
+        if (modalCurView !== title) {
+            modalCurView = title
+            $('#closeM').text(title)
+            $('#mmmmodal-body').html(html)
+        }
+        $('#hoyoungModal').modal('show');
     }
-
 
 }
 
@@ -334,7 +352,50 @@ function initConditionApply() {
                </span>
         </div>
 </div>
-    `,"根据条件应用 - 点我关闭")
+    `, "自选规则填充")
+}
+
+function initSettingModal() {
+    customMyModelView(`<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */">
+<div class="span3" style="
+    width: 100%;
+    display: flex;
+    margin-left: 0;
+    align-content: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+">
+    <label class="btn green-stripe"  style="margin: 0;">修改默认加载数据的条数： (0,保持原样)</label>
+    <input class="span5 m-wrap" name="hoyoung-setting" id="resetFirstLoadRows" value="${MRCfg.resetFirstLoadRows}" style="margin: 0 0 1rem 0;width: fit-content;">
+</div>
+<div class="span3" style="
+    width: 100%;
+    display: flex;
+    margin-left: 0;
+    align-content: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+">
+    <label class="btn blue-stripe"  style="margin: 0;">脚本启动提示：(空字符串,不显示提示)</label>
+    <input class="span5 m-wrap" name="hoyoung-setting" id="welcomeWords" value="${MRCfg.welcomeWords}" style="margin: 0 0 1rem 0;width: fit-content;">
+</div>
+<button class="btn pull-right yellow-stripe" id="hoyoung-save-setting">保存设置</button>
+</div>
+                `, "出勤脚本设置");
+    $('#hoyoung-save-setting').click(function () {
+        $('input[name=hoyoung-setting]').each((i, obj) => {
+            let v = $(obj).val()
+            if (parseFloat(v).toString() === 'NaN') v = "'" + v + "'";
+            eval("MRCfg." + $(obj).attr("id") + "=" + v)
+            saveMRCfg()
+            $('#hoyoungModal').modal('hide');
+        })
+        console.log(MRCfg)
+    })
 }
 
 /**
@@ -351,7 +412,7 @@ function initTableSavedUsers() {
                   data-toggle="table" data-click-to-select="true" 
                   data-show-columns="false" 
                   data-select-item-name="myRadioName">
-                </table>`,"切换登录用户 - 点我关闭")
+                </table>`, "切换登录用户")
     $table = $('#hoyoung_table')
     $table.on('click-row.bs.table', function (e, row, $element) {
         $('.success').removeClass('success');
@@ -384,21 +445,21 @@ function initTableSavedUsers() {
 
     $('#hoyoung_set_dfl_login_user').click(function () {
         let result = $table.bootstrapTable('getSelections');
-        if (result.length > 1){
+        if (result.length > 1) {
             notify("坑爹呢，你默认登录这么多个用户吗？")
-        }else {
+        } else {
             for (let i = 0; i < result.length; i++) {
                 MRCfg.defaultLoginUser = MRCfg.savedUsers[getIndexOfUser(result[i].username)]
                 saveMRCfg()
-                notify("默认账号已设置为："+result[i].username)
+                notify("默认账号已设置为：" + result[i].username)
             }
         }
     })
     $('#hoyoung_login').click(function () {
         let result = $table.bootstrapTable('getSelections');
-        if (result.length > 1){
+        if (result.length > 1) {
             notify("坑爹呢，你默认登录这么多个用户吗？")
-        }else {
+        } else {
             login(result[0].username, MRCfg.savedUsers[getIndexOfUser(result[0].username)].password)
         }
 
@@ -491,7 +552,7 @@ function btnGenerator(id, text, bColor = "", custom_icon = "", btnHint = '') {
  * 欢迎
  */
 function welcome() {
-    notify('智能出勤脚本加载成功！');
+    if (MRCfg.welcomeWords !== "") notify(MRCfg.welcomeWords);
 }
 
 /**
@@ -505,12 +566,14 @@ function mergeObject(obj1, obj2) {
             else if (!Array.isArray(object1[i]) && typeof object1[i] === 'object') combine(object1[i], object2[i]);
         }
     }
+
     function del(object1, object2) {
         for (let i in object1) {
             if (object2[i] === undefined || object2[i] === null) delete object1[i];
             else if (!Array.isArray(object1[i]) && typeof object1[i] === 'object') del(object1[i], object2[i]);
         }
     }
+
     combine(obj1, obj2);
     del(obj1, obj2);
 }
