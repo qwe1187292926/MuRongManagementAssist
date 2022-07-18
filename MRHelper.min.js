@@ -3,8 +3,8 @@
 // @namespace    hoyoung.assist.att.sDay
 // @version      1.5
 // @icon         https://www.agemys.com/favicon.ico
-// @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRSign.js
-// @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRSign.js
+// @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
+// @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
 // @description  A script enhance MR attendance management
 // @author       NOBODY
 // @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005
