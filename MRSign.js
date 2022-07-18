@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      1.1
+// @version      1.3
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRSign.js
 // @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRSign.js
@@ -23,12 +23,13 @@
 // 0为工作日，1为休息日
 const WORK_DAY = "0";
 const ON_WORK = "01";
-let WORK_DICT = {
-    "05": "婚假",
-    "04": "病假",
+
+const TRAVEL_DICT={"1":"出差","0":"正常"};
+const WORK_DICT = {
     "03": "事假",
+    "04": "病假",
+    "05": "婚假",
     "02": "调休",
-    "01": "√",
     "00": "未出勤",
     "12": "居家办公",
     "14": "育儿假",
@@ -38,7 +39,8 @@ let WORK_DICT = {
     "08": "产假",
     "13": "病休",
     "10": "产检假",
-    "09": "年假"
+    "09": "年假",
+    "01": "√",
 };
 
 let loginUser = {
@@ -92,11 +94,7 @@ function saveMRCfg() {
 
         const login_btn = $($('button[type=submit]')[0])
         let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
-        let logSavedUserData = $(`<a style="margin-left: 1rem">查看保存的用户名与密码</a>`)
         clearSavedUserData.click(clearSavedUsers);
-        logSavedUserData.click(() => {
-            console.log("保存的用户和密码", MRCfg.savedUsers)
-        })
         $($('a[data-toggle]')[0]).parent().parent().append(clearSavedUserData)
         $($('a[data-toggle]')[0]).parent().parent().append(logSavedUserData)
         // 移除按钮登录事件
@@ -142,15 +140,7 @@ function saveMRCfg() {
 
 
     // 自定义出勤状态的生成区域
-    let selectData = `<select name="chk_sts" id="hoyoung_status_data" class="m-wrap span5" style="margin-top: 0;margin-bottom:0px;margin-right:5px;max-width: 5rem">`
-    let keys = Object.keys(WORK_DICT)
-    let values = Object.values(WORK_DICT)
-    for (let i = 0; i < keys.length; i++) {
-        selectData += `<option value=${keys[i]}>${values[i]}</option>`
-    }
-    selectData += `</select>`
-    target.prepend(btnGenerator('hoyoung_set_status_data', ' 应用', 'yellow-stripe', 'fa fa-check-square-o', '将选中行应用这个出勤状态'))
-    target.prepend(selectData)
+    target.prepend(btnGenerator('hoyoung_set_status_data', ' 自选条件填充', 'yellow-stripe', 'fa fa-check-square-o', '将选中行应用这个出勤状态'))
 
     // 智慧填充的生成区域
     target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'green-stripe', 'fa fa-rocket', '将该项目编号填入到所有项目，并自动勾选出勤状态'));
@@ -175,7 +165,7 @@ function saveMRCfg() {
         initSettingModal()
     })
 
-    if (MRCfg.resetFirstLoadRows != 0) {
+    if (MRCfg.resetFirstLoadRows != 0 && isChuQingPage()) {
         $('table#murong-table').bootstrapTable('getOptions').pageSize = MRCfg.resetFirstLoadRows;
         conditionQuery();
     }
@@ -327,7 +317,7 @@ function customMyModelView(html, title) {
         $('#hoyoungModal').hide();
         $('#hoyoungModal').modal('show');
         $('#closeM').click(() => {
-            $('#hoyoungModal').modal('hide');
+            hideModal()
         })
 
     } else {
@@ -343,16 +333,80 @@ function customMyModelView(html, title) {
 }
 
 function initConditionApply() {
+    // 出勤情况
+    let selectData = `<div>出勤情况：<select name="chk_sts" id="hoyoung_custom_status_data" class="m-wrap span5" style="margin: 0 0px 0 1rem;padding:0;max-width: 5rem">`
+    let keys = Object.keys(WORK_DICT)
+    let values = Object.values(WORK_DICT)
+    for (let i = 0; i < keys.length; i++) {
+        selectData += `<option value=${keys[i]}>${values[i]}</option>`
+    }
+    selectData += `</select></div>`
+    // 是否出差
+    selectData += `<div>是否出差：<select name="chk_sts" id="hoyoung_custom_travel_data" class="m-wrap span5" style="margin:0 0px 0 1rem;padding:0;max-width: 5rem">`
+    keys = Object.keys(TRAVEL_DICT)
+    values = Object.values(TRAVEL_DICT)
+    for (let i = 0; i < keys.length; i++) {
+        selectData += `<option value=${keys[i]}>${values[i]}</option>`
+    }
+    selectData += `</select></div>`
     customMyModelView(`
-        <div style="display: flex;justify-content: space-between">
-        <div class="span3">
-           <label class="btn red-stripe">* 考勤月份</label>
-               <span class="input-group  custom-date-range form-inline" data-date="201601" data-date-format="yyyyMM">
-                  <input class="span5 m-wrap form-control date-picker dpd1" id="att_month" data-date-format="yyyy-mm" name="att_month" placeholder="" type="text" value="2022-07" required="">
-               </span>
-        </div>
+        <div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */">
+<div class="span3" style="
+    width: 100%;
+    display: flex;
+    margin-left: 0;
+    align-content: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+">
+<div>
+<label class="btn green-stripe"  style="margin: 0;">起始日期</label>
+    <input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="${dateFormat("YYmmdd",new Date())}" style="margin: 0 0 0 0;width: fit-content;">
 </div>
-    `, "自选规则填充")
+—
+<div>
+<label class="btn green-stripe"  style="margin: 0;">结束日期</label>
+    <input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="${dateFormat("YYmmdd",new Date())}" id="hoyoung_custom_end_date" style="margin: 0 0 0 0;width: fit-content;">
+</div>
+    </div>
+<div class="span3" style="
+    width: 100%;
+    padding-top: 1rem;
+    display: flex;
+    margin-left: 0;
+    align-content: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;">
+${selectData}
+</div>
+<button class="btn pull-right yellow-stripe" style="margin-top: 2rem" id="hoyoung_custom_apply">应用到所选日期区间</button>
+</div>
+    `, "按自选规则填充")
+
+    $('#hoyoung_custom_apply').click(function () {
+        let fIndex = -1;
+        const table = $("#murong-table");
+        const rows = table.bootstrapTable('getOptions').data;
+        $.each(rows,function (index, value){
+            let vDate = parseInt(value.att_dt)
+            let cStartDate = $('#hoyoung_custom_start_date').val()
+            let cEndDate = $('#hoyoung_custom_end_date').val()
+            if (vDate>=cStartDate && vDate<=cEndDate){
+                if (fIndex === -1) fIndex = index
+                value.state = true
+                value.att_typ = $('#hoyoung_custom_status_data').val()
+                value.travel_flg = $('#hoyoung_custom_travel_data').val()
+            }
+        })
+        hideModal()
+        refreshTable()
+        console.log($('tbody tr')[fIndex])
+        $('tbody tr')[fIndex].scrollIntoView()
+    })
 }
 
 function initSettingModal() {
@@ -368,12 +422,13 @@ function initSettingModal() {
     align-items: center;
 ">
     <label class="btn green-stripe"  style="margin: 0;">修改默认加载数据的条数： (0,保持原样)</label>
-    <input class="span5 m-wrap" name="hoyoung-setting" id="resetFirstLoadRows" value="${MRCfg.resetFirstLoadRows}" style="margin: 0 0 1rem 0;width: fit-content;">
+    <input class="span5 m-wrap" name="hoyoung-setting" id="resetFirstLoadRows" value="${MRCfg.resetFirstLoadRows}" style="margin: 0 1rem 0 0;width: fit-content;">
 </div>
 <div class="span3" style="
     width: 100%;
     display: flex;
     margin-left: 0;
+    margin-top: 1rem;
     align-content: center;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -381,9 +436,9 @@ function initSettingModal() {
     align-items: center;
 ">
     <label class="btn blue-stripe"  style="margin: 0;">脚本启动提示：(空字符串,不显示提示)</label>
-    <input class="span5 m-wrap" name="hoyoung-setting" id="welcomeWords" value="${MRCfg.welcomeWords}" style="margin: 0 0 1rem 0;width: fit-content;">
+    <input class="span5 m-wrap" name="hoyoung-setting" id="welcomeWords" value="${MRCfg.welcomeWords}" style="margin: 0 1rem 0 0;width: fit-content;">
 </div>
-<button class="btn pull-right yellow-stripe" id="hoyoung-save-setting">保存设置</button>
+<button class="btn pull-right yellow-stripe" style="margin-top: 1rem;" id="hoyoung-save-setting">保存设置</button>
 </div>
                 `, "出勤脚本设置");
     $('#hoyoung-save-setting').click(function () {
@@ -392,10 +447,14 @@ function initSettingModal() {
             if (parseFloat(v).toString() === 'NaN') v = "'" + v + "'";
             eval("MRCfg." + $(obj).attr("id") + "=" + v)
             saveMRCfg()
-            $('#hoyoungModal').modal('hide');
+            hideModal()
         })
         console.log(MRCfg)
     })
+}
+
+function hideModal(){
+    $('#hoyoungModal').modal('hide');
 }
 
 /**
@@ -594,5 +653,39 @@ function notify(msg) {
  * @returns {boolean}
  */
 function isLoginPage() {
-    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation() == 'https://mis.murongtech.com/mrmis/login.do' || getLocation() == 'https://mis.murongtech.com/mrmis/logOut.do'
+    return getLocation() == 'https://mis.murongtech.com/mrmis/' || getLocation().indexOf('https://mis.murongtech.com/mrmis/login.do') !== -1 || getLocation().indexOf('https://mis.murongtech.com/mrmis/logOut.do') !== -1
+}
+
+/**
+ * 是否出勤页
+ * @returns {boolean}
+ */
+function isChuQingPage() {
+    return getLocation().indexOf("https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005") !== -1 || getLocation().indexOf('https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332015') !== -1
+}
+
+/**
+ * 日期格式化
+ * @param fmt
+ * @param date
+ * @returns {*}
+ */
+function dateFormat(fmt, date) {
+    let ret;
+    const opt = {
+        "Y+": date.getFullYear().toString(),        // 年
+        "m+": (date.getMonth() + 1).toString(),     // 月
+        "d+": date.getDate().toString(),            // 日
+        "H+": date.getHours().toString(),           // 时
+        "M+": date.getMinutes().toString(),         // 分
+        "S+": date.getSeconds().toString()          // 秒
+        // 有其他格式化字符需求可以继续添加，必须转化成字符串
+    };
+    for (let k in opt) {
+        ret = new RegExp("(" + k + ")").exec(fmt);
+        if (ret) {
+            fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+        };
+    };
+    return fmt;
 }
