@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      1.5
+// @version      2.0
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
 // @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
@@ -96,7 +96,6 @@ function saveMRCfg() {
         let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
         clearSavedUserData.click(clearSavedUsers);
         $($('a[data-toggle]')[0]).parent().parent().append(clearSavedUserData)
-        $($('a[data-toggle]')[0]).parent().parent().append(logSavedUserData)
         // 移除按钮登录事件
         login_btn.removeAttr('type')
 
@@ -245,7 +244,7 @@ function setProductInfo(proId) {
         function (res) {
             res = JSON.parse(res.responseText)
             let data = res.rec[0];
-            if (res.rec_num == "1" || confirm(`当前项目包含多个项目编号，是否选用最相近的结果：\n项目编号：${data.pro_id}\n项目名称：《${data.pro_nm}》\n项目负责人：${data.att_man_nm}`)) {
+            if (res.rec_num == "1" || confirm("当前项目包含多个项目编号，是否选用最相近的结果：\n项目编号：" + data.pro_id + "\n项目名称：《" + data.pro_nm + "》\n项目负责人：" + data.att_man_nm)) {
                 console.log(res)
                 const table = $("#murong-table");
                 table.bootstrapTable('checkAll');
@@ -300,19 +299,7 @@ let modalCurView = ""
 function customMyModelView(html, title) {
     if ($('#hoyoungModal').length == 0) {
         modalCurView = title
-        let modelTemplate = `
-    <div aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" id="hoyoungModal" class="modal fade ui-draggable in" style="display: block;">
-        <div class="modal-dialog" style="width: 600px;">
-        <div class="portlet box blue">
-        <div class="portlet-title">
-            <div class="caption"><i class="icon-reorder"></i><span id="closeM">${title}</span></div>
-        </div>
-        <div class="portlet-body modal-body" id="mmmmodal-body">
-            ${html}
-        </div>
-        </div>
-        </div>
-    </div>`
+        let modelTemplate = '<div aria-hidden="false"aria-labelledby="myModalLabel"role="dialog"tabindex="-1"id="hoyoungModal"class="modal fade ui-draggable in"style="display: block;"><div class="modal-dialog"style="width: 600px;"><div class="portlet box blue"><div class="portlet-title"><div class="caption"><i class="icon-reorder"></i><span id="closeM">' + title + '</span></div></div><div class="portlet-body modal-body"id="mmmmodal-body">' + html + '</div></div></div></div>'
         $('body').append(modelTemplate)
         $('#hoyoungModal').hide();
         $('#hoyoungModal').modal('show');
@@ -349,56 +336,7 @@ function initConditionApply() {
         selectData += `<option value=${keys[i]}>${values[i]}</option>`
     }
     selectData += `</select></div>`
-    customMyModelView(`
-        <div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */">
-<div class="span3" style="
-    width: 100%;
-    display: flex;
-    margin-left: 0;
-    align-content: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    flex-direction: row;
-    align-items: center;
-">
-<div>
-<label class="btn green-stripe"  style="margin: 0;">起始日期</label>
-    <input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="${dateFormat("YYmm", new Date())}01" style="margin: 0 0 0 0;width: fit-content;">
-</div>
-—
-<div>
-<label class="btn green-stripe"  style="margin: 0;">结束日期</label>
-    <input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="${dateFormat("YYmmdd", new Date())}" id="hoyoung_custom_end_date" style="margin: 0 0 0 0;width: fit-content;">
-</div>
-    </div>
-<div class="span3" style="
-    width: 100%;
-    padding-top: 1rem;
-    display: flex;
-    margin-left: 0;
-    align-content: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    flex-direction: row;
-    align-items: center;">
-${selectData}
-</div>
-<button class="btn pull-right yellow-stripe" style="margin-top: 2rem" id="hoyoung_custom_apply">应用到所选日期区间</button>
-<div class="span3" style="
-    width: 100%;
-    padding-top: 1rem;
-    display: flex;
-    margin-left: 0;
-    align-content: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    flex-direction: row;
-    color: green;
-    align-items: center;">
-    * 日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠
-    </div>
-</div>
-    `, "按自选规则填充")
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><button class="btn pull-right yellow-stripe"style="margin-top: 2rem"id="hoyoung_custom_apply">应用到所选日期区间</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
 
     $('#hoyoung_custom_apply').click(function () {
         let fIndex = -1;
@@ -423,51 +361,7 @@ ${selectData}
 }
 
 function initSettingModal() {
-    customMyModelView(`<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */">
-<div class="span3" style="
-    width: 100%;
-    display: flex;
-    margin-left: 0;
-    align-content: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    flex-direction: row;
-    align-items: center;
-">
-    <label class="btn green-stripe"  style="margin: 0;">修改默认加载数据的条数：</label>
-    <input class="span5 m-wrap" name="hoyoung-setting" id="resetFirstLoadRows" value="${MRCfg.resetFirstLoadRows}" style="margin: 0 1rem 0 0;width: fit-content;">
-</div>
-<div class="span3" style="
-    width: 100%;
-    display: flex;
-    margin-left: 0;
-    margin-top: 1rem;
-    align-content: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    flex-direction: row;
-    align-items: center;
-">
-    <label class="btn blue-stripe"  style="margin: 0;">脚本启动提示：</label>
-    <input class="span5 m-wrap" name="hoyoung-setting" id="welcomeWords" value="${MRCfg.welcomeWords}" style="margin: 0 1rem 0 0;width: fit-content;">
-</div>
-<button class="btn pull-right yellow-stripe" style="margin-top: 1rem;" id="hoyoung-save-setting">保存设置</button>
-<div class="span3" style="
-    width: 100%;
-    padding-top: 1rem;
-    display: flex;
-    margin-left: 0;
-    align-content: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    color: green;
-    flex-direction: row;
-    align-items: center;">
-    <p style="margin: 0">* 数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p>
-      <p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p>
-    </div>
-</div>
-                `, "出勤脚本设置");
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数：</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示：</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">*数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
     $('#hoyoung-save-setting').click(function () {
         $('input[name=hoyoung-setting]').each((i, obj) => {
             let v = $(obj).val()
@@ -488,17 +382,7 @@ function hideModal() {
  * 初始化切换账号的显示
  */
 function initTableSavedUsers() {
-    customMyModelView(`
-                <div style="display: flex;justify-content: space-between;flex-wrap: wrap;">
-                    <button class="btn btn-primary" id="hoyoung_set_dfl_login_user"><i class="fa fa-check-square-o"></i>  默认登录用户</button>
-                    <button class="btn btn-primary" id="hoyoung_login"><i class="fa fa-check-square-o"></i>  Login</button>
-                    <button class="btn btn-primary" id="hoyoung_del_user"><i class="fa fa-check-square-o"></i>  delete</button>
-                </div>
-                <table class="murong-table table table-hover" id="hoyoung_table"
-                  data-toggle="table" data-click-to-select="true" 
-                  data-show-columns="false" 
-                  data-select-item-name="myRadioName">
-                </table>`, "切换登录用户")
+    customMyModelView('<div style="display: flex;justify-content: space-between;flex-wrap: wrap;"><button class="btn btn-primary"id="hoyoung_set_dfl_login_user"><i class="fa fa-check-square-o"></i>默认登录用户</button><button class="btn btn-primary"id="hoyoung_login"><i class="fa fa-check-square-o"></i>Login</button><button class="btn btn-primary"id="hoyoung_del_user"><i class="fa fa-check-square-o"></i>delete</button></div><table class="murong-table table table-hover"id="hoyoung_table"data-toggle="table"data-click-to-select="true"data-show-columns="false"data-select-item-name="myRadioName"></table>', "切换登录用户")
     $table = $('#hoyoung_table')
     $table.on('click-row.bs.table', function (e, row, $element) {
         $('.success').removeClass('success');
