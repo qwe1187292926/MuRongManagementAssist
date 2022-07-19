@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    hoyoung.assist.att.sDay
-// @version      2.0
+// @version      2.1
 // @icon         https://www.agemys.com/favicon.ico
 // @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
 // @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
@@ -336,17 +336,25 @@ function initConditionApply() {
         selectData += `<option value=${keys[i]}>${values[i]}</option>`
     }
     selectData += `</select></div>`
-    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><button class="btn pull-right yellow-stripe"style="margin-top: 2rem"id="hoyoung_custom_apply">应用到所选日期区间</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><div class="pull-right"><label for="skipHoliday"style="width: fit-content;margin-top: 2rem;margin-left: auto;"><input type="checkbox"id="skipHoliday"style="margin: 0;">&nbsp;忽略节假日</label><button class="btn yellow-stripe"style=""id="hoyoung_custom_apply">应用到所选日期区间</button></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
 
     $('#hoyoung_custom_apply').click(function () {
         let fIndex = -1;
         const table = $("#murong-table");
         const rows = table.bootstrapTable('getOptions').data;
+        const isSkipHoliday = $('#skipHoliday').prop('checked')
+        let cStartDate = $('#hoyoung_custom_start_date').val()
+        let cEndDate = $('#hoyoung_custom_end_date').val()
         $.each(rows, function (index, value) {
             let vDate = parseInt(value.att_dt)
-            let cStartDate = $('#hoyoung_custom_start_date').val()
-            let cEndDate = $('#hoyoung_custom_end_date').val()
             if (vDate >= cStartDate && vDate <= cEndDate) {
+                // 是否跳过节假日（仅应用工作日）
+                if (isSkipHoliday){
+                    // 不是工作日，当即退出
+                    if (value.hld_flg !== WORK_DAY){
+                        return true;
+                    }
+                }
                 if (fIndex === -1) fIndex = index
                 value.state = true
                 value.att_typ = $('#hoyoung_custom_status_data').val()
@@ -361,7 +369,7 @@ function initConditionApply() {
 }
 
 function initSettingModal() {
-    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数：</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示：</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">*数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">*数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
     $('#hoyoung-save-setting').click(function () {
         $('input[name=hoyoung-setting]').each((i, obj) => {
             let v = $(obj).val()
