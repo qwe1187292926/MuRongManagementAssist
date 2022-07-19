@@ -205,13 +205,11 @@ function clearSavedUsers() {
  * 设置出勤
  * @param att 出勤值，可参考全局变量，为空时自动判断
  */
-function setWorkStatus(att = "") {
+function setWorkStatus() {
     // 获取当前页
     const data = $("#murong-table")
     // 无参数时全选
-    if (att == "") {
-        data.bootstrapTable('checkAll');
-    }
+    data.bootstrapTable('checkAll');
     const rows = data.bootstrapTable('getSelections');
     // 修改工作日为出勤
     let length = rows.length;
@@ -219,19 +217,11 @@ function setWorkStatus(att = "") {
         let row = rows[n - 1];
         // hld_flg 假日标记值 盲猜是holiday flag
         // 无参数 工作日上班 休息日休息
-        if (att == "") {
-            if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
-        } else {
-            row.att_typ = att
-        }
+        if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
     }
     // 重新加载页面
     refreshTable();
-    if (att == "") {
-        notify('已自动勾选工作日为出勤！');
-    } else {
-        notify('选中行已勾选指定状态')
-    }
+    notify('已自动勾选工作日为出勤！');
 }
 
 /**
@@ -349,9 +339,9 @@ function initConditionApply() {
             let vDate = parseInt(value.att_dt)
             if (vDate >= cStartDate && vDate <= cEndDate) {
                 // 是否跳过节假日（仅应用工作日）
-                if (isSkipHoliday){
+                if (isSkipHoliday) {
                     // 不是工作日，当即退出
-                    if (value.hld_flg !== WORK_DAY){
+                    if (value.hld_flg !== WORK_DAY) {
                         return true;
                     }
                 }
@@ -369,7 +359,7 @@ function initConditionApply() {
 }
 
 function initSettingModal() {
-    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">*数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">* 数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
     $('#hoyoung-save-setting').click(function () {
         $('input[name=hoyoung-setting]').each((i, obj) => {
             let v = $(obj).val()
