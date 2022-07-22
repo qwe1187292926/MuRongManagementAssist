@@ -129,6 +129,35 @@ function saveMRCfg() {
     // 初始化工具栏区域
     const target = $("#toolbar");
 
+    if(target.length !== 0){
+        // 自定义出勤状态的生成区域
+        target.prepend(btnGenerator('hoyoung_set_status_data', ' 自选条件填充', 'yellow-stripe', 'fa fa-check-square-o', '将选中行应用这个出勤状态'))
+
+        // 智慧填充的生成区域
+        target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'green-stripe', 'fa fa-rocket', '将该项目编号填入到所有项目，并自动勾选出勤状态'));
+        target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px;max-width: 8rem" class="m-wrap span5" type="text" value="' + MRCfg.proId + '"/>');
+
+        // 添加事件
+        // 智慧填充
+        target.find('#hoyoung_set_product_data').click(function () {
+            const table = $("#murong-table");
+            table.bootstrapTable('checkAll');
+            const rows = table.bootstrapTable('getSelections');
+            setProductInfo(target.find("#search_proid").val(), rows)
+            setWorkStatus()
+        })
+        // 选中行
+        target.find('#hoyoung_set_status_data').click(function () {
+            // setWorkStatus(target.find("#hoyoung_status_data").val());
+            initConditionApply()
+        })
+
+        if (MRCfg.resetFirstLoadRows != 0 && isChuQingPage()) {
+            $('table#murong-table').bootstrapTable('getOptions').pageSize = MRCfg.resetFirstLoadRows;
+            conditionQuery();
+        }
+    }
+
     // 切换账号的生成区域
     let li = `<li id="multiAccount"><a href="#"><i class="icon-user"></i>多账号管理</a></li>`
     $('ul.nav li.user').before(li)
@@ -137,28 +166,6 @@ function saveMRCfg() {
     li = `<li id="hoyoung_setting"><a href="#"><i class="icon-cogs"></i>脚本设置</a></li>`
     $('ul.nav li.user').before(li)
 
-
-    // 自定义出勤状态的生成区域
-    target.prepend(btnGenerator('hoyoung_set_status_data', ' 自选条件填充', 'yellow-stripe', 'fa fa-check-square-o', '将选中行应用这个出勤状态'))
-
-    // 智慧填充的生成区域
-    target.prepend(btnGenerator('hoyoung_set_product_data', ' 智慧填充', 'green-stripe', 'fa fa-rocket', '将该项目编号填入到所有项目，并自动勾选出勤状态'));
-    target.prepend('<input id="search_proid" placeholder="请输入项目编号" style="margin-right: 5px;max-width: 8rem" class="m-wrap span5" type="text" value="' + MRCfg.proId + '"/>');
-
-    // 添加事件
-    // 智慧填充
-    target.find('#hoyoung_set_product_data').click(function () {
-        const table = $("#murong-table");
-        table.bootstrapTable('checkAll');
-        const rows = table.bootstrapTable('getSelections');
-        setProductInfo(target.find("#search_proid").val(), rows)
-        setWorkStatus()
-    })
-    // 选中行
-    target.find('#hoyoung_set_status_data').click(function () {
-        // setWorkStatus(target.find("#hoyoung_status_data").val());
-        initConditionApply()
-    })
     // 切换账号
     $('#multiAccount').click(() => {
         initTableSavedUsers()
@@ -166,11 +173,6 @@ function saveMRCfg() {
     $('#hoyoung_setting').click(() => {
         initSettingModal()
     })
-
-    if (MRCfg.resetFirstLoadRows != 0 && isChuQingPage()) {
-        $('table#murong-table').bootstrapTable('getOptions').pageSize = MRCfg.resetFirstLoadRows;
-        conditionQuery();
-    }
 
 })();
 
