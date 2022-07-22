@@ -332,7 +332,7 @@ function initConditionApply() {
     selectData += `</select></div>`
     customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><div class="pull-right"><label for="skipHoliday"style="width: fit-content;margin-top: 2rem;margin-left: auto;"><input type="checkbox"id="skipHoliday"style="margin: 0;">&nbsp;忽略节假日</label><label for="applyProduct" style="width: fit-content;margin-left: auto;"><input type="checkbox" id="applyProduct" style="margin: 0;"><span id="apSpan">&nbsp;另设项目编号</span></label><button class="pull-right btn yellow-stripe"style=""id="hoyoung_custom_apply">应用到所选日期区间</button></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
 
-    $('#applyProduct').click(()=>{
+    $('#applyProduct').unbind().click(()=>{
         if($('#applyProduct').prop('checked')){
             productId = prompt("输入项目编号")
             if (productId !== ""){
@@ -343,7 +343,7 @@ function initConditionApply() {
         }
     })
 
-    $('#hoyoung_custom_apply').click(function () {
+    $('#hoyoung_custom_apply').unbind().click(function () {
         let fIndex = -1;
         const table = $("#murong-table");
         table.bootstrapTable('uncheckAll');
@@ -381,7 +381,7 @@ function initConditionApply() {
 
 function initSettingModal() {
     customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">* 数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
-    $('#hoyoung-save-setting').click(function () {
+    $('#hoyoung-save-setting').unbind().click(function () {
         $('input[name=hoyoung-setting]').each((i, obj) => {
             let v = $(obj).val()
             if (parseFloat(v).toString() === 'NaN') v = "'" + v + "'";
@@ -432,7 +432,7 @@ function initTableSavedUsers() {
 
     $table.bootstrapTable('load', getWarpedSavedUsers());
 
-    $('#hoyoung_set_dfl_login_user').click(function () {
+    $('#hoyoung_set_dfl_login_user').unbind().click(function () {
         let result = $table.bootstrapTable('getSelections');
         if (result.length > 1) {
             notify("坑爹呢，你默认登录这么多个用户吗？")
@@ -444,7 +444,7 @@ function initTableSavedUsers() {
             }
         }
     })
-    $('#hoyoung_login').click(function () {
+    $('#hoyoung_login').unbind().click(function () {
         let result = $table.bootstrapTable('getSelections');
         if (result.length > 1) {
             notify("坑爹呢，你默认登录这么多个用户吗？")
@@ -453,7 +453,7 @@ function initTableSavedUsers() {
         }
 
     })
-    $('#hoyoung_del_user').click(function () {
+    $('#hoyoung_del_user').unbind().click(function () {
         let result = $table.bootstrapTable('getSelections');
         for (let i = 0; i < result.length; i++) {
             delSavedUser(result[i].username)
