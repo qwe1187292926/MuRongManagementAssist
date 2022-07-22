@@ -250,8 +250,9 @@ function setProductInfo(proId, rows, isSave = true) {
                 if (isSave) {
                     MRCfg.proId = proId
                     saveMRCfg()
+                    notify(`${proId} 项目编号已记录`);
                 }
-                notify(`${proId} 项目编号已记录`);
+                notify(`已应用${proId}到选中行`);
             } else {
                 console.log("ads", res)
                 notify("项目查询结果包含多个或无结果！");
@@ -313,6 +314,7 @@ function customMyModelView(html, title) {
 
 function initConditionApply() {
     // 出勤情况
+    let productId = "";
     let selectData = `<div>出勤情况：<select name="chk_sts" id="hoyoung_custom_status_data" class="m-wrap span5" style="margin: 0 0px 0 1rem;padding:0;max-width: 5rem">`
     let keys = Object.keys(WORK_DICT)
     let values = Object.values(WORK_DICT)
@@ -328,12 +330,24 @@ function initConditionApply() {
         selectData += `<option value=${keys[i]}>${values[i]}</option>`
     }
     selectData += `</select></div>`
-    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><div class="pull-right"><label for="skipHoliday"style="width: fit-content;margin-top: 2rem;margin-left: auto;"><input type="checkbox"id="skipHoliday"style="margin: 0;">&nbsp;忽略节假日</label><button class="btn yellow-stripe"style=""id="hoyoung_custom_apply">应用到所选日期区间</button></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><div class="pull-right"><label for="skipHoliday"style="width: fit-content;margin-top: 2rem;margin-left: auto;"><input type="checkbox"id="skipHoliday"style="margin: 0;">&nbsp;忽略节假日</label><label for="applyProduct" style="width: fit-content;margin-left: auto;"><input type="checkbox" id="applyProduct" style="margin: 0;"><span id="apSpan">&nbsp;另设项目编号</span></label><button class="pull-right btn yellow-stripe"style=""id="hoyoung_custom_apply">应用到所选日期区间</button></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
+
+    $('#applyProduct').click(()=>{
+        if($('#applyProduct').prop('checked')){
+            productId = prompt("输入项目编号")
+            if (productId !== ""){
+                $('#apSpan').text(' 另设项目编号'+"("+productId+")")
+            }
+        }else {
+            $('#apSpan').text(' 另设项目编号')
+        }
+    })
 
     $('#hoyoung_custom_apply').click(function () {
         let fIndex = -1;
         const table = $("#murong-table");
-        const rows = table.bootstrapTable('getOptions').data;
+        table.bootstrapTable('uncheckAll');
+        let rows = table.bootstrapTable('getOptions').data;
         const isSkipHoliday = $('#skipHoliday').prop('checked')
         let cStartDate = $('#hoyoung_custom_start_date').val()
         let cEndDate = $('#hoyoung_custom_end_date').val()
@@ -353,6 +367,11 @@ function initConditionApply() {
                 value.travel_flg = $('#hoyoung_custom_travel_data').val()
             }
         })
+        if (productId != ""){
+            rows = table.bootstrapTable('getSelections');
+            notify("请稍后，正在应用项目编号，禁止操作")
+            setProductInfo(productId, rows,false)
+        }
         hideModal()
         refreshTable()
         console.log($('tbody tr')[fIndex])
