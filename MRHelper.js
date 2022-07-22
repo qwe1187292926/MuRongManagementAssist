@@ -148,7 +148,10 @@ function saveMRCfg() {
     // 添加事件
     // 智慧填充
     target.find('#hoyoung_set_product_data').click(function () {
-        setProductInfo(target.find("#search_proid").val())
+        const table = $("#murong-table");
+        table.bootstrapTable('checkAll');
+        const rows = table.bootstrapTable('getSelections');
+        setProductInfo(target.find("#search_proid").val(), rows)
         setWorkStatus()
     })
     // 选中行
@@ -228,7 +231,7 @@ function setWorkStatus() {
  * 填充项目信息，并自动出勤
  * @param proId
  */
-function setProductInfo(proId) {
+function setProductInfo(proId, rows, isSave = true) {
     $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do',
         "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId,
         function (res) {
@@ -236,9 +239,6 @@ function setProductInfo(proId) {
             let data = res.rec[0];
             if (res.rec_num == "1" || confirm("当前项目包含多个项目编号，是否选用最相近的结果：\n项目编号：" + data.pro_id + "\n项目名称：《" + data.pro_nm + "》\n项目负责人：" + data.att_man_nm)) {
                 console.log(res)
-                const table = $("#murong-table");
-                table.bootstrapTable('checkAll');
-                const rows = table.bootstrapTable('getSelections');
                 const length = rows.length;
                 for (let n = 1; n <= length; n++) {
                     const row = rows[n - 1];
@@ -247,8 +247,10 @@ function setProductInfo(proId) {
                     }
                 }
                 refreshTable();
-                MRCfg.proId = proId
-                saveMRCfg()
+                if (isSave) {
+                    MRCfg.proId = proId
+                    saveMRCfg()
+                }
                 notify(`${proId} 项目编号已记录`);
             } else {
                 console.log("ads", res)
@@ -513,7 +515,7 @@ function getLocation() {
  * @returns {*|jQuery|HTMLElement}
  */
 function btnGenerator(id, text, bColor = "", custom_icon = "", btnHint = '') {
-    return $(`<button class='btn btn-primary ${bColor}' title=${btnHint} style='margin-left: 10px' id='${id}'><i class='${custom_icon}'/> ${text}</button><span style='display: inline-block;margin: 0 2rem;border-left: 2px solid #8080805e;'>1</span>`)
+    return $(`<button class='btn btn-primary ${bColor} popovers' data-trigger='hover' data-placement='top' data-content='${btnHint}' style='margin-left: 10px' id='${id}'><i class='${custom_icon}'/> ${text}</button><span style='display: inline-block;margin: 0 2rem;border-left: 2px solid #8080805e;'>1</span>`)
 }
 
 /**
