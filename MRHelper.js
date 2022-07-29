@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         出勤助手
-// @namespace    hoyoung.assist.att.sDay
-// @version      2.1
+// @namespace    https://github.com/qwe1187292926/
+// @version      2.3
 // @icon         https://www.agemys.com/favicon.ico
+// @description  A script enhance MR attendance management
+// @homepageURL    https://github.com/qwe1187292926/MuRongManagementAssist
+// @supportURL     https://github.com/qwe1187292926/MuRongManagementAssist/issue
 // @updateURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
 // @downloadURL    https://cdn.jsdelivr.net/gh/qwe1187292926/MuRongManagementAssist/MRHelper.min.js
-// @description  A script enhance MR attendance management
 // @author       NOBODY
 // @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005
 // @match      https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332015
@@ -18,6 +20,7 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
+
 
 // 工作日字典：let dict={"1":"休","0":"班"};
 // 0为工作日，1为休息日
@@ -453,7 +456,6 @@ function initTableSavedUsers() {
         } else {
             login(result[0].username, MRCfg.savedUsers[getIndexOfUser(result[0].username)].password)
         }
-
     })
     $('#hoyoung_del_user').unbind().click(function () {
         let result = $table.bootstrapTable('getSelections');
