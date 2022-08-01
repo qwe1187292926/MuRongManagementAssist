@@ -27,42 +27,21 @@
 const WORK_DAY = "0";
 const ON_WORK = "01";
 
-const TRAVEL_DICT = {"1": "出差", "0": "正常"};
-const WORK_DICT = {
-    "03": "事假",
-    "04": "病假",
-    "05": "婚假",
-    "02": "调休",
-    "00": "未出勤",
-    "12": "居家办公",
-    "14": "育儿假",
-    "11": "远程",
-    "06": "丧假",
-    "07": "陪产假",
-    "08": "产假",
-    "13": "病休",
-    "10": "产检假",
-    "09": "年假",
-    "01": "√",
-};
+const TRAVEL_DICT = {"1": "出差", "0": "正常"},WORK_DICT = {"03":"事假","04":"病假","05":"婚假","02":"调休","00":"未出勤","12":"居家办公","14":"育儿假","11":"远程","06":"丧假","07":"陪产假","08":"产假","13":"病休","10":"产检假","09":"年假","01":"√"};
 
 let loginUser = {
     oper_no: "",
     oper_pwd: "",
     oper_log_mod: "1",
     rad: ""
-};
-
-let MRCfg = {
+}, MRCfg = {
     resetFirstLoadRows: 0,
     defaultLoginUser: {username: "", password: ""},
     savedUsers: [],
     proId: "",
     welcomeWords: "智能出勤脚本加载成功！",
     order: ""
-}
-
-
+},readConfigArray = [undefined]
 
 function initMRCfg() {
     let saved = GM_getValue("MR_CONFIG", "")
@@ -84,7 +63,7 @@ function saveMRCfg() {
 
 
     initMRCfg()
-    let order = MRCfg.order
+    let order = MRCfg.order,W = typeof unsafeWindow === 'undefined' ? window : unsafeWindow
     if (order !== ""){
         let t = order.split("|")
         let action = t[0];
@@ -114,9 +93,30 @@ function saveMRCfg() {
         if (MRCfg.savedUsers.length > 1 && MRCfg.defaultLoginUser.password == "") notify("你可以点击标题设置自动填充登录用户或者进行多账号管理！")
 
         const login_btn = $($('button[type=submit]')[0])
-        let clearSavedUserData = $(`<a>清除已保存的用户</a>`)
-        clearSavedUserData.click(clearSavedUsers);
-        $($('a[data-toggle]')[0]).parent().parent().append(clearSavedUserData)
+        $("body").append($("<input type='file' id='Hoyoung_config_file' style='display:none'>"))
+        const inputConfig_input = $("#Hoyoung_config_file");
+        inputConfig_input.on("change", importConfig);
+        let exportConfig_a = $(`<a>导出脚本配置</a>`)
+        let importConfig_a = $(`<a style="margin-left: 1rem">导入脚本配置</a>`)
+        exportConfig_a.click(()=>{
+            exportConfig(MRCfg)
+        });
+        importConfig_a.click(()=>{
+            // 导入配置按钮
+            readConfigArray[1] = $.Deferred();
+            inputConfig_input.click();
+            readConfigArray[1].then(() => {
+                let json = readConfigArray[0];
+                MRCfg = json.MY_CONFIG;
+                saveMRCfg()
+                notify('配置导入成功，3秒后将自动刷新页面');
+                setTimeout(() => {
+                    W.location.reload()
+                }, 3000);
+            })
+        });
+        $($('a[data-toggle]')[0]).parent().parent().append(exportConfig_a)
+        $($('a[data-toggle]')[0]).parent().parent().append(importConfig_a)
         // 移除按钮登录事件
         login_btn.removeAttr('type')
 
@@ -216,15 +216,6 @@ function delSavedUser(name) {
 
 function getIndexOfUser(name) {
     return MRCfg.savedUsers.findIndex(o => o.username === name);
-}
-
-/**
- * 清除保存的用户数据
- */
-function clearSavedUsers() {
-    MRCfg.savedUsers = []
-    saveMRCfg()
-    notify("数据已清除")
 }
 
 /**
@@ -488,6 +479,64 @@ function initTableSavedUsers() {
 
 function getWarpedSavedUsers() {
     return MRCfg.savedUsers.concat()
+}
+
+/**
+ * 导出配置文件
+ * @param MY_CONFIG MY_API.CONFIG
+ */
+function exportConfig(MY_CONFIG) {
+    const exportJson = {
+        VERSION: GM_info.script.version,
+        MY_CONFIG: MY_CONFIG
+    };
+    return downFile('MRHelper_CONFIG.json', exportJson);
+}
+
+/**
+ * 导入配置文件
+ */
+function importConfig() {
+    let selectedFile = document.getElementById("Hoyoung_config_file").files[0];
+    let reader = new FileReader();
+    reader.onload = function () {
+        try {
+            readConfigArray[0] = JSON.parse(decodeURIComponent(this.result));
+            if (typeof readConfigArray[0] == 'object' && readConfigArray[0]) {
+                const list = ["VERSION", "MY_CONFIG"];
+                for (const i of list) {
+                    if (!readConfigArray[0].hasOwnProperty(i)) return wrongFile();
+                }
+                return readConfigArray[1].resolve();
+            } else {
+                return wrongFile();
+            }
+        } catch (e) {
+            return wrongFile();
+        }
+    };
+    reader.readAsText(selectedFile);
+    function wrongFile(msg = '文件格式错误') {
+        return notify(msg);
+    }
+}
+
+/**
+ * 保存文件到本地
+ * @param fileName 文件名
+ * @param fileContent 文件内容
+ */
+function downFile(fileName, fileContent) {
+    let elementA = document.createElement("a");
+    elementA.setAttribute(
+        "href",
+        "data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(fileContent))
+    );
+    elementA.setAttribute("download", fileName);
+    elementA.style.display = "none";
+    document.body.appendChild(elementA);
+    elementA.click();
+    document.body.removeChild(elementA);
 }
 
 /**
