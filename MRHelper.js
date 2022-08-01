@@ -58,8 +58,11 @@ let MRCfg = {
     defaultLoginUser: {username: "", password: ""},
     savedUsers: [],
     proId: "",
-    welcomeWords: "智能出勤脚本加载成功！"
+    welcomeWords: "智能出勤脚本加载成功！",
+    order: ""
 }
+
+
 
 function initMRCfg() {
     let saved = GM_getValue("MR_CONFIG", "")
@@ -81,6 +84,21 @@ function saveMRCfg() {
 
 
     initMRCfg()
+    let order = MRCfg.order
+    if (order !== ""){
+        let t = order.split("|")
+        let action = t[0];
+        let param = t[1];
+        switch (action) {
+            case "r":
+                MRCfg.order = "";
+                saveMRCfg();
+                window.location.href = param;
+                break;
+            default:
+                break;
+        }
+    }
 
     // 自动填充用户名密码
     if (isLoginPage()) {
@@ -132,7 +150,7 @@ function saveMRCfg() {
     // 初始化工具栏区域
     const target = $("#toolbar");
 
-    if(target.length !== 0){
+    if (target.length !== 0) {
         // 自定义出勤状态的生成区域
         target.prepend(btnGenerator('hoyoung_set_status_data', ' 自选条件填充', 'yellow-stripe', 'fa fa-check-square-o', '将选中行应用这个出勤状态'))
 
@@ -337,13 +355,13 @@ function initConditionApply() {
     selectData += `</select></div>`
     customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><div><label class="btn green-stripe" style="margin: 0;">起始日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" id="hoyoung_custom_start_date" value="' + dateFormat("YYmm", new Date()) + '01" style="margin: 0 0 0 1rem;width: fit-content;"></div>—<div><label class="btn green-stripe"style="margin: 0;">结束日期</label><input class="span5 m-wrap" placeholder="日期格式: YYmmdd" value="' + dateFormat("YYmmdd", new Date()) + '" id="hoyoung_custom_end_date" style="margin: 0 0 0 1rem;width: fit-content;"></div></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;">' + selectData + '</div><div class="pull-right"><label for="skipHoliday"style="width: fit-content;margin-top: 2rem;margin-left: auto;"><input type="checkbox"id="skipHoliday"style="margin: 0;">&nbsp;忽略节假日</label><label for="applyProduct" style="width: fit-content;margin-left: auto;"><input type="checkbox" id="applyProduct" style="margin: 0;"><span id="apSpan">&nbsp;另设项目编号</span></label><button class="pull-right btn yellow-stripe"style=""id="hoyoung_custom_apply">应用到所选日期区间</button></div><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;color: green;align-items: center;">*日期的填写格式为YYmmdd，即年月日，需要满足八位长度（例如2022年1月1日对应的是20220101），毋须携带横杠</div></div>', "按自选规则填充")
 
-    $('#applyProduct').unbind().click(()=>{
-        if($('#applyProduct').prop('checked')){
+    $('#applyProduct').unbind().click(() => {
+        if ($('#applyProduct').prop('checked')) {
             productId = prompt("输入项目编号")
-            if (productId !== ""){
-                $('#apSpan').text(' 另设项目编号'+"("+productId+")")
+            if (productId !== "") {
+                $('#apSpan').text(' 另设项目编号' + "(" + productId + ")")
             }
-        }else {
+        } else {
             $('#apSpan').text(' 另设项目编号')
         }
     })
@@ -372,10 +390,10 @@ function initConditionApply() {
                 value.travel_flg = $('#hoyoung_custom_travel_data').val()
             }
         })
-        if (productId != ""){
+        if (productId != "") {
             rows = table.bootstrapTable('getSelections');
             notify("请稍后，正在应用项目编号，禁止操作")
-            setProductInfo(productId, rows,false)
+            setProductInfo(productId, rows, false)
         }
         hideModal()
         refreshTable()
@@ -454,6 +472,8 @@ function initTableSavedUsers() {
         if (result.length > 1) {
             notify("坑爹呢，你默认登录这么多个用户吗？")
         } else {
+            MRCfg.order="r|https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005#"
+            saveMRCfg()
             login(result[0].username, MRCfg.savedUsers[getIndexOfUser(result[0].username)].password)
         }
     })
