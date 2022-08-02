@@ -47,6 +47,7 @@ function initMRCfg() {
     let saved = GM_getValue("MR_CONFIG", "")
     if (saved == "") {
         GM_setValue("MR_CONFIG", MRCfg)
+        saved = MRCfg
     } else {
         mergeObject(saved, MRCfg)
     }
