@@ -21,10 +21,10 @@ fi
 cd $search_dir
 
 #删除文件
-find $search_dir -ctime +$between_day_filter -type f -delete
+find $search_dir -mtime +$between_day_filter -type f -delete
 
 #压缩文件
-#find $search_dir -ctime +$between_day_filter -type f -exec gzip
+#find $search_dir -mtime +$between_day_filter -type f -exec gzip
 
 #删除空目录
 find $search_dir -type d -empty |grep -x $search_dir -v|xargs rm -rfd

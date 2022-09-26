@@ -99,8 +99,17 @@ function saveMRCfg() {
         inputConfig_input.on("change", importConfig);
         let exportConfig_a = $(`<a>导出脚本配置</a>`)
         let importConfig_a = $(`<a style="margin-left: 1rem">导入脚本配置</a>`)
+        let delConfig_a = $(`<a style="margin-left: 1rem">恢复默认配置</a>`)
         exportConfig_a.click(()=>{
             exportConfig(MRCfg)
+        });
+        delConfig_a.click(()=>{
+            MRCfg = ""
+            saveMRCfg()
+            notify("已清空配置文件，将在三秒后刷新页面")
+            setTimeout(() => {
+                W.location.reload()
+            }, 3000);
         });
         importConfig_a.click(()=>{
             // 导入配置按钮
@@ -118,6 +127,7 @@ function saveMRCfg() {
         });
         $($('a[data-toggle]')[0]).parent().parent().append(exportConfig_a)
         $($('a[data-toggle]')[0]).parent().parent().append(importConfig_a)
+        $($('a[data-toggle]')[0]).parent().parent().append(delConfig_a)
         // 移除按钮登录事件
         login_btn.removeAttr('type')
 
@@ -162,7 +172,7 @@ function saveMRCfg() {
         // 添加事件
         // 智慧填充
         target.find('#hoyoung_set_product_data').click(function () {
-            const table = $("#murong-table");
+            const table = getMRTable();
             table.bootstrapTable('checkAll');
             const rows = table.bootstrapTable('getSelections');
             setProductInfo(target.find("#search_proid").val(), rows)
@@ -225,7 +235,7 @@ function getIndexOfUser(name) {
  */
 function setWorkStatus() {
     // 获取当前页
-    const data = $("#murong-table")
+    const data = getMRTable()
     // 无参数时全选
     data.bootstrapTable('checkAll');
     const rows = data.bootstrapTable('getSelections');
@@ -327,6 +337,10 @@ function customMyModelView(html, title) {
 
 }
 
+let getMRTable = ()=>{
+    return $("#murong-table");
+}
+
 function initConditionApply() {
     // 出勤情况
     let productId = "";
@@ -360,7 +374,7 @@ function initConditionApply() {
 
     $('#hoyoung_custom_apply').unbind().click(function () {
         let fIndex = -1;
-        const table = $("#murong-table");
+        const table = getMRTable();
         table.bootstrapTable('uncheckAll');
         let rows = table.bootstrapTable('getOptions').data;
         const isSkipHoliday = $('#skipHoliday').prop('checked')
@@ -575,7 +589,7 @@ function setLoginUserData(username, password) {
  */
 function refreshTable() {
     // 此方式加载表格会导致分页异常，无法加载下一页。可以用筛选条件-初始化来解决。
-    const data = $("#murong-table")
+    const data = getMRTable()
     data.bootstrapTable('load', data.bootstrapTable('getData'))
 }
 
