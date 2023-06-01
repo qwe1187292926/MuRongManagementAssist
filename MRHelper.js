@@ -27,7 +27,23 @@
 const WORK_DAY = "0";
 const ON_WORK = "01";
 
-const TRAVEL_DICT = {"1": "出差", "0": "正常"},WORK_DICT = {"03":"事假","04":"病假","05":"婚假","02":"调休","00":"未出勤","12":"居家办公","14":"育儿假","11":"远程","06":"丧假","07":"陪产假","08":"产假","13":"病休","10":"产检假","09":"年假","01":"√"};
+const TRAVEL_DICT = {"1": "出差", "0": "正常"}, WORK_DICT = {
+    "03": "事假",
+    "04": "病假",
+    "05": "婚假",
+    "02": "调休",
+    "00": "未出勤",
+    "12": "居家办公",
+    "14": "育儿假",
+    "11": "远程",
+    "06": "丧假",
+    "07": "陪产假",
+    "08": "产假",
+    "13": "病休",
+    "10": "产检假",
+    "09": "年假",
+    "01": "√"
+};
 
 let loginUser = {
     oper_no: "",
@@ -35,13 +51,15 @@ let loginUser = {
     oper_log_mod: "1",
     rad: ""
 }, MRCfg = {
+    IamBusinessTrip: false,
     resetFirstLoadRows: 0,
+    enableSavedPwd: false,
     defaultLoginUser: {username: "", password: ""},
     savedUsers: [],
     proId: "",
     welcomeWords: "智能出勤脚本加载成功！",
     order: ""
-},readConfigArray = [undefined]
+}, readConfigArray = [undefined]
 
 function initMRCfg() {
     let saved = GM_getValue("MR_CONFIG", "")
@@ -64,8 +82,8 @@ function saveMRCfg() {
 
 
     initMRCfg()
-    let order = MRCfg.order,W = typeof unsafeWindow === 'undefined' ? window : unsafeWindow
-    if (order !== ""){
+    let order = MRCfg.order, W = typeof unsafeWindow === 'undefined' ? window : unsafeWindow
+    if (order !== "") {
         let t = order.split("|")
         let action = t[0];
         let param = t[1];
@@ -100,10 +118,10 @@ function saveMRCfg() {
         let exportConfig_a = $(`<a>导出脚本配置</a>`)
         let importConfig_a = $(`<a style="margin-left: 1rem">导入脚本配置</a>`)
         let delConfig_a = $(`<a style="margin-left: 1rem">恢复默认配置</a>`)
-        exportConfig_a.click(()=>{
+        exportConfig_a.click(() => {
             exportConfig(MRCfg)
         });
-        delConfig_a.click(()=>{
+        delConfig_a.click(() => {
             MRCfg = ""
             saveMRCfg()
             notify("已清空配置文件，将在三秒后刷新页面")
@@ -111,7 +129,7 @@ function saveMRCfg() {
                 W.location.reload()
             }, 3000);
         });
-        importConfig_a.click(()=>{
+        importConfig_a.click(() => {
             // 导入配置按钮
             readConfigArray[1] = $.Deferred();
             inputConfig_input.click();
@@ -138,13 +156,13 @@ function saveMRCfg() {
             const username = $('#oper_no').val()
             const password = $('#oper_pwd1').val()
             let findInArray = MRCfg.savedUsers.find(o => o.username === username)
-            if (findInArray != undefined) {
+            if (findInArray != undefined && MRCfg.enableSavedPwd) {
                 let oPassword = findInArray.password
                 // 更新密码
                 if (password != oPassword) {
                     setSavedUsers(username, password)
                 }
-            } else {
+            } else if (MRCfg.enableSavedPwd){
                 setSavedUsers(username, password)
             }
             login(username, password)
@@ -246,6 +264,13 @@ function setWorkStatus() {
         // hld_flg 假日标记值 盲猜是holiday flag
         // 无参数 工作日上班 休息日休息
         if (row.hld_flg == WORK_DAY) row.att_typ = ON_WORK
+        if (MRCfg.IamBusinessTrip){
+            // TODO 硬编码
+            row.travel_flg = 1
+        }
+    }
+    if (MRCfg.IamBusinessTrip){
+        notify('出差辛苦了~已勾选全部自然日为出差！');
     }
     // 重新加载页面
     refreshTable();
@@ -337,7 +362,7 @@ function customMyModelView(html, title) {
 
 }
 
-let getMRTable = ()=>{
+let getMRTable = () => {
     return $("#murong-table");
 }
 
@@ -409,17 +434,28 @@ function initConditionApply() {
 }
 
 function initSettingModal() {
-    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">* 数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
+    let checkedAble = MRCfg.IamBusinessTrip?"checked":"";
+    customMyModelView('<div style="/* display:flex; *//* justify-content: flex-start; *//* align-content: center; *//* flex-wrap: nowrap; *//* flex-direction: row; */"><div class="span3"style="width: 100%;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn green-stripe"style="margin: 0;">修改默认加载数据的条数</label><input class="span5 m-wrap"name="hoyoung-setting"id="resetFirstLoadRows"value="' + MRCfg.resetFirstLoadRows + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3"style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe"style="margin: 0;">脚本启动提示</label><input class="span5 m-wrap"name="hoyoung-setting"id="welcomeWords"value="' + MRCfg.welcomeWords + '"style="margin: 0 1rem 0 0;width: fit-content;"></div><div class="span3" style="width: 100%;display: flex;margin-left: 0;margin-top: 1rem;align-content: center;justify-content: space-between;flex-wrap: wrap;flex-direction: row;align-items: center;"><label class="btn blue-stripe" style="margin: 0;">出差设置</label><label for="IamBusinessTrip" style="width: fit-content;margin-left: auto;"><input type="checkbox" name="hoyoung-setting" id="IamBusinessTrip" '+ checkedAble + ' style="vertical-align: middle;margin: auto;">&nbsp;我在出差</label></div><button class="btn pull-right yellow-stripe"style="margin-top: 1rem;"id="hoyoung-save-setting">保存设置</button><div class="span3"style="width: 100%;padding-top: 1rem;display: flex;margin-left: 0;align-content: center;justify-content: space-between;flex-wrap: wrap;color: green;flex-direction: row;align-items: center;"><p style="margin: 0">* 数据默认加载条数，默认为10条，当该值被设置为0时，不再劫持默认加载条数。</p><p style="margin: 0">&nbsp;&nbsp;当脚本启动提示参数被设置为空时，启动完毕不再发出提醒。</p></div></div>', "出勤脚本设置");
     $('#hoyoung-save-setting').unbind().click(function () {
         $('input[name=hoyoung-setting]').each((i, obj) => {
-            let v = $(obj).val()
-            if (parseFloat(v).toString() === 'NaN') v = "'" + v + "'";
+            let v = getValue(obj)
+
             eval("MRCfg." + $(obj).attr("id") + "=" + v)
             saveMRCfg()
             hideModal()
         })
         console.log(MRCfg)
     })
+}
+
+function getValue(obj){
+    if ($(obj).attr('type') == 'checkbox'){
+        return $(obj).prop("checked");
+    }else {
+        v = $(obj).val();
+        if (parseFloat(v).toString() === 'NaN') v = "'" + v + "'";
+        return v;
+    }
 }
 
 function hideModal() {
@@ -478,7 +514,7 @@ function initTableSavedUsers() {
         if (result.length > 1) {
             notify("坑爹呢，你默认登录这么多个用户吗？")
         } else {
-            MRCfg.order="r|https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005#"
+            MRCfg.order = "r|https://mis.murongtech.com/mrmis/toMenu.do?menu_id=332005#"
             saveMRCfg()
             login(result[0].username, MRCfg.savedUsers[getIndexOfUser(result[0].username)].password)
         }
@@ -531,6 +567,7 @@ function importConfig() {
         }
     };
     reader.readAsText(selectedFile);
+
     function wrongFile(msg = '文件格式错误') {
         return notify(msg);
     }
