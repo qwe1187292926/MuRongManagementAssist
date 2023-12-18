@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         出勤助手
 // @namespace    https://github.com/qwe1187292926/
-// @version      1000
+// @version      1001
 // @icon         https://www.agemys.com/favicon.ico
 // @description  A script enhance MR attendance management
 // @homepageURL    https://github.com/qwe1187292926/MuRongManagementAssist
@@ -544,7 +544,7 @@ function initStateCount() {
         if (curMonth === '') {
             curMonth = val.att_dt.substring(0, 6)
         }
-        if ((val.travel_flg = 1)) {
+        if (val.travel_flg === '1') {
             count += 0.5
         }
     })
