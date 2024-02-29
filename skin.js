@@ -27,8 +27,8 @@ const skinList = [{
 initScript()
 
 function initScript() {
-    $.log(res,resp)
-    let body = JSON.parse(resp.body);
+    $.log("这是请求头",res,"这是响应体",resp)
+    let body = JSON.parse(resp);
     body.product = skinList;
     $.done({body: JSON.stringify(body)});
 }
