@@ -13,6 +13,9 @@ function initScript() {
     let allSkinListRequest = res;
     allSkinListRequest.url = "https://api.moodjiapp.com/v1/getskinlist";
     $.post(allSkinListRequest, (error, response, data) => {
+        $.log("data: " + JSON.stringify(data))
+        $.log("error: " + JSON.stringify(error))
+        $.log("response: " + JSON.stringify(response))
         let allSkinList = JSON.parse(data.skinInfoList)
         // 遍历allSkinList，将allSkinList的每条数据中的skinId和skinName提取出来，放到skinList中
         for (let i = 0; i < allSkinList.length; i++) {
@@ -25,6 +28,7 @@ function initScript() {
             skinList.push({skinId, skinName});
         }
     })
+    $.log("skinList: " + JSON.stringify(skinList))
     $.done({body: JSON.stringify(skinList)});
 }
 
