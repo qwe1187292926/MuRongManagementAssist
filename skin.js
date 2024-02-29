@@ -1,6 +1,8 @@
+console.log("Moodji脚本被执行")
 var body = $response.body;
 var url = $request.url;
 var obj = JSON.parse(body);
+console.log("Moodji脚本的响应体：", body)
 const skinList = [{
     "seed": "",
     "count": 1,
