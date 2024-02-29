@@ -27,10 +27,10 @@ const skinList = [{
 initScript()
 
 function initScript() {
-    $.log("这是请求头",res,"这是响应体",resp)
+    $.log("这是请求头",res.toString(),"这是响应体",resp.toString())
     let body = JSON.parse(resp.body);
     body.product = skinList;
-    console.log("body:"+body)
+    console.log("body:"+JSON.stringify(body))
     $done({body: JSON.stringify(body)});
     // $.done({body: JSON.stringify(body)});
 }
