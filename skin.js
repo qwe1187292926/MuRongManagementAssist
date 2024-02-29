@@ -30,7 +30,9 @@ function initScript() {
     $.log("这是请求头",res,"这是响应体",resp)
     let body = JSON.parse(resp.body);
     body.product = skinList;
-    $.done({body: JSON.stringify(body)});
+    console.log("body:"+body)
+    $done({body: JSON.stringify(body)});
+    // $.done({body: JSON.stringify(body)});
 }
 
 function isUndefined(obj) {
