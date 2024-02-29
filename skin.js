@@ -3,39 +3,28 @@ const $ = new Env(ScriptName);
 
 const res = $request;
 const resp = isUndefined($response) ? null : $response;
-
-const skinList = {
-    "products": [
-        {
-            "seed": "",
-            "count": 1,
-            "productId": "dog",
-            "type": 2,
-            "expireTime": 2524607999
-        }, {
-            "seed": "",
-            "count": 1,
-            "productId": "capybara",
-            "type": 2,
-            "expireTime": 2524607999
-        }, {
-            "seed": "",
-            "count": 1,
-            "productId": "dragon",
-            "type": 2,
-            "expireTime": 2524607999
-        }
-    ]
-}
+let skinList = []
 
 initScript()
 
 function initScript() {
     // let body = JSON.parse(resp.body);
     // body.product = skinList;
-    console.log("Moodji脚本的请求体：" + JSON.stringify(res))
-    console.log("Moodji脚本的响应体：" + JSON.stringify(resp))
-    console.log("修改后响应：" + JSON.stringify(skinList))
+    let allSkinListRequest = res;
+    allSkinListRequest.url = "https://api.moodjiapp.com/v1/getskinlist";
+    $.post(allSkinListRequest, (error, response, data) => {
+        let allSkinList = JSON.parse(data.skinInfoList)
+        // 遍历allSkinList，将allSkinList的每条数据中的skinId和skinName提取出来，放到skinList中
+        for (let i = 0; i < allSkinList.length; i++) {
+            let skinInfo = allSkinList[i];
+            let skinId = skinInfo.skinId;
+            let seed = "";
+            let count = 1;
+            let type = 2;
+            let expireTime = 2524607999;
+            skinList.push({skinId, skinName});
+        }
+    })
     $.done({body: JSON.stringify(skinList)});
 }
 
