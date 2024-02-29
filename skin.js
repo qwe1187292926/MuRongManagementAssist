@@ -11,6 +11,7 @@ function initScript() {
     // let body = JSON.parse(resp.body);
     // body.product = skinList;
     let allSkinListRequest = res;
+    $.log("allSkinListRequest: " + JSON.stringify(allSkinListRequest));
     allSkinListRequest.url = "https://moodji.api.flowzland.com//moodjiallinone/v1/getskinlist";
     $.post(allSkinListRequest, async (err, resp, data) => {
         $.log("data: " + JSON.stringify(data))
