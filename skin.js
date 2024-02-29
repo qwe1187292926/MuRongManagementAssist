@@ -12,7 +12,7 @@ function initScript() {
     // body.product = skinList;
     let allSkinListRequest = res;
     allSkinListRequest.url = "https://api.moodjiapp.com/v1/getskinlist";
-    $.post(allSkinListRequest, (error, response, data) => {
+    $.post(allSkinListRequest, async (error, response, data) => {
         $.log("data: " + JSON.stringify(data))
         $.log("error: " + JSON.stringify(error))
         $.log("response: " + JSON.stringify(response))
