@@ -3,36 +3,37 @@ const $ = new Env(ScriptName);
 
 const res = $request;
 const resp = isUndefined($response) ? null : $response;
-let skinList = []
+
+const skinList = {
+    "products": [
+        {
+            "seed": "",
+            "count": 1,
+            "productId": "dog",
+            "type": 2,
+            "expireTime": 2524607999
+        }, {
+            "seed": "",
+            "count": 1,
+            "productId": "capybara",
+            "type": 2,
+            "expireTime": 2524607999
+        }, {
+            "seed": "",
+            "count": 1,
+            "productId": "dragon",
+            "type": 2,
+            "expireTime": 2524607999
+        }
+    ]
+}
 
 initScript()
 
 function initScript() {
     // let body = JSON.parse(resp.body);
     // body.product = skinList;
-    let allSkinListRequest = res;
-    $.log("allSkinListRequest: " + JSON.stringify(allSkinListRequest));
-    allSkinListRequest.url = "https://moodji.api.flowzland.com//moodjiallinone/v1/getskinlist";
-    allSkinListRequest.path = "https://moodji.api.flowzland.com//moodjiallinone/v1/getskinlist";
-    $.post(allSkinListRequest, async (err, resp, data) => {
-        $.log("data: " + JSON.stringify(data))
-        $.log("error: " + JSON.stringify(error))
-        $.log("response: " + JSON.stringify(response))
-        let allSkinList = JSON.parse(data).skinInfoList
-        // 遍历allSkinList，将allSkinList的每条数据中的skinId和skinName提取出来，放到skinList中
-        for (let i = 0; i < allSkinList.length; i++) {
-            let skinInfo = allSkinList[i];
-            let skinId = skinInfo.skinId;
-            let seed = "";
-            let count = 1;
-            let type = 2;
-            let expireTime = 2524607999;
-            skinList.push({skinId, skinName});
-        }
-        $.log("skinList: " + JSON.stringify(skinList))
-        $.done({body: JSON.stringify(skinList)});
-    })
-
+    $.done({body: JSON.stringify(skinList)});
 }
 
 function isUndefined(obj) {
@@ -87,6 +88,10 @@ function Env(t, e) {
 
         isLoon() {
             return "undefined" != typeof $loon
+        }
+
+        isShadowrocket() {
+            return "undefined" != typeof $rocket
         }
 
         toObj(t, e = null) {
@@ -235,7 +240,7 @@ function Env(t, e) {
                 try {
                     if (t.headers["set-cookie"]) {
                         const s = t.headers["set-cookie"].map(this.cktough.Cookie.parse).toString();
-                        this.ckjar.setCookieSync(s, null), e.cookieJar = this.ckjar
+                        s && this.ckjar.setCookieSync(s, null), e.cookieJar = this.ckjar
                     }
                 } catch (t) {
                     this.logErr(t)
@@ -251,15 +256,16 @@ function Env(t, e) {
 
         post(t, e = (() => {
         })) {
-            if (t.body && t.headers && !t.headers["Content-Type"] && (t.headers["Content-Type"] = "application/x-www-form-urlencoded"), t.headers && delete t.headers["Content-Length"], this.isSurge() || this.isLoon()) this.isSurge() && this.isNeedRewrite && (t.headers = t.headers || {}, Object.assign(t.headers, {"X-Surge-Skip-Scripting": !1})), $httpClient.post(t, (t, s, i) => {
+            const s = t.method ? t.method.toLocaleLowerCase() : "post";
+            if (t.body && t.headers && !t.headers["Content-Type"] && (t.headers["Content-Type"] = "application/x-www-form-urlencoded"), t.headers && delete t.headers["Content-Length"], this.isSurge() || this.isLoon()) this.isSurge() && this.isNeedRewrite && (t.headers = t.headers || {}, Object.assign(t.headers, {"X-Surge-Skip-Scripting": !1})), $httpClient[s](t, (t, s, i) => {
                 !t && s && (s.body = i, s.statusCode = s.status), e(t, s, i)
-            }); else if (this.isQuanX()) t.method = "POST", this.isNeedRewrite && (t.opts = t.opts || {}, Object.assign(t.opts, {hints: !1})), $task.fetch(t).then(t => {
+            }); else if (this.isQuanX()) t.method = s, this.isNeedRewrite && (t.opts = t.opts || {}, Object.assign(t.opts, {hints: !1})), $task.fetch(t).then(t => {
                 const {statusCode: s, statusCode: i, headers: r, body: o} = t;
                 e(null, {status: s, statusCode: i, headers: r, body: o}, o)
             }, t => e(t)); else if (this.isNode()) {
                 this.initGotEnv(t);
-                const {url: s, ...i} = t;
-                this.got.post(s, i).then(t => {
+                const {url: i, ...r} = t;
+                this.got[s](i, r).then(t => {
                     const {statusCode: s, statusCode: i, headers: r, body: o} = t;
                     e(null, {status: s, statusCode: i, headers: r, body: o}, o)
                 }, t => {
@@ -269,18 +275,19 @@ function Env(t, e) {
             }
         }
 
-        time(t) {
-            let e = {
-                "M+": (new Date).getMonth() + 1,
-                "d+": (new Date).getDate(),
-                "H+": (new Date).getHours(),
-                "m+": (new Date).getMinutes(),
-                "s+": (new Date).getSeconds(),
-                "q+": Math.floor(((new Date).getMonth() + 3) / 3),
-                S: (new Date).getMilliseconds()
+        time(t, e = null) {
+            const s = e ? new Date(e) : new Date;
+            let i = {
+                "M+": s.getMonth() + 1,
+                "d+": s.getDate(),
+                "H+": s.getHours(),
+                "m+": s.getMinutes(),
+                "s+": s.getSeconds(),
+                "q+": Math.floor((s.getMonth() + 3) / 3),
+                S: s.getMilliseconds()
             };
-            /(y+)/.test(t) && (t = t.replace(RegExp.$1, ((new Date).getFullYear() + "").substr(4 - RegExp.$1.length)));
-            for (let s in e) new RegExp("(" + s + ")").test(t) && (t = t.replace(RegExp.$1, 1 == RegExp.$1.length ? e[s] : ("00" + e[s]).substr(("" + e[s]).length)));
+            /(y+)/.test(t) && (t = t.replace(RegExp.$1, (s.getFullYear() + "").substr(4 - RegExp.$1.length)));
+            for (let e in i) new RegExp("(" + e + ")").test(t) && (t = t.replace(RegExp.$1, 1 == RegExp.$1.length ? i[e] : ("00" + i[e]).substr(("" + i[e]).length)));
             return t
         }
 
@@ -303,9 +310,10 @@ function Env(t, e) {
                     }
                 }
             };
-            this.isMute || (this.isSurge() || this.isLoon() ? $notification.post(e, s, i, o(r)) : this.isQuanX() && $notify(e, s, i, o(r)));
-            let h = ["", "==============\ud83d\udce3\u7cfb\u7edf\u901a\u77e5\ud83d\udce3=============="];
-            h.push(e), s && h.push(s), i && h.push(i), console.log(h.join("\n")), this.logs = this.logs.concat(h)
+            if (this.isMute || (this.isSurge() || this.isLoon() ? $notification.post(e, s, i, o(r)) : this.isQuanX() && $notify(e, s, i, o(r))), !this.isMuteLog) {
+                let t = ["", "==============\ud83d\udce3\u7cfb\u7edf\u901a\u77e5\ud83d\udce3=============="];
+                t.push(e), s && t.push(s), i && t.push(i), console.log(t.join("\n")), this.logs = this.logs.concat(t)
+            }
         }
 
         log(...t) {
