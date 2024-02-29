@@ -5,25 +5,25 @@ const res = $request;
 const resp = isUndefined($response) ? null : $response;
 
 const skinList = {
-    "products" : [
+    "products": [
         {
-            "seed" : "",
-            "count" : 1,
-            "productId" : "dog",
-            "type" : 2,
-            "expireTime" : 2524607999
-        },{
-            "seed" : "",
-            "count" : 1,
-            "productId" : "capybara",
-            "type" : 2,
-            "expireTime" : 2524607999
-        },{
-            "seed" : "",
-            "count" : 1,
-            "productId" : "dragon",
-            "type" : 2,
-            "expireTime" : 2524607999
+            "seed": "",
+            "count": 1,
+            "productId": "dog",
+            "type": 2,
+            "expireTime": 2524607999
+        }, {
+            "seed": "",
+            "count": 1,
+            "productId": "capybara",
+            "type": 2,
+            "expireTime": 2524607999
+        }, {
+            "seed": "",
+            "count": 1,
+            "productId": "dragon",
+            "type": 2,
+            "expireTime": 2524607999
         }
     ]
 }
@@ -33,8 +33,9 @@ initScript()
 function initScript() {
     // let body = JSON.parse(resp.body);
     // body.product = skinList;
-    console.log("Moodji脚本的请求体：", JSON.stringify(res))
-    console.log("Moodji脚本的响应体：", JSON.stringify(resp))
+    console.log("Moodji脚本的请求体：" + JSON.stringify(res))
+    console.log("Moodji脚本的响应体：" + JSON.stringify(resp))
+    console.log("修改后响应：" + JSON.stringify(skinList))
     $.done({body: JSON.stringify(skinList)});
 }
 
