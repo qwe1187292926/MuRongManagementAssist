@@ -25,6 +25,9 @@
 // 工作日字典：let dict={"1":"休","0":"班"};
 // 0为工作日，1为休息日
 
+
+
+
 var nzhcn;
 !function (t, e) {
     nzhcn = e()
@@ -446,16 +449,41 @@ function setWorkStatus() {
     notify('已自动勾选工作日为出勤！');
 }
 
+function gbkToUtf8(str) {
+    let utf8str = '';
+    for (let i = 0; i < str.length; i++) {
+        let code = str.charCodeAt(i);
+        if (code >= 0x80 && code <= 0xFF) {
+            // GBK 编码中，汉字通常是两个字节
+            let byte1 = str.charCodeAt(i++);
+            let byte2 = str.charCodeAt(i);
+            let codePoint = ((byte1 & 0xFF) << 8) | (byte2 & 0xFF);
+            utf8str += String.fromCharCode(((codePoint >> 8) & 0xFF) | ((codePoint << 8) & 0xFF00));
+        } else {
+            utf8str += str.charAt(i);
+        }
+    }
+    return utf8str;
+}
+
 /**
  * 填充项目信息，并自动出勤
  * @param proId
  */
 function setProductInfo(proId, rows, isSave = true) {
     $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do',
-        "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=8&pro_nm=" + proId,
+        "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=2507&flag=1&pro_nm=" + proId,
         function (res) {
-            res = JSON.parse(res.responseText)
-            let data = res.rec[0];
+            console.log(res,"res")
+            let text = res
+            res = JSON.parse(text)
+            let data;
+            try {
+                data = res.rec[0]
+            }catch (e){
+                notify(`获取项目信息失败：${res.gda.msg_inf}`)
+                return
+            }
             if (res.rec_num == "1" || confirm("当前项目包含多个项目编号，是否选用最相近的结果：\n项目编号：" + data.pro_id + "\n项目名称：《" + data.pro_nm + "》\n项目负责人：" + data.att_man_nm)) {
                 console.log(res)
                 const length = rows.length;
@@ -491,19 +519,21 @@ function setProductInfo(proId, rows, isSave = true) {
  * @param onFailed function
  */
 function $HTTP(method, url, data, onSuccess, onFailed) {
-    GM_xmlhttpRequest({
-        method: method,
-        url: url,
-        data: data,
-        headers: {
-            "Referer": getLocation(),
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "Cookie": document.cookie
-        },
-
-        onload: onSuccess,
-        onerror: onFailed
-    });
+    $.post(url,data,onSuccess);
+    // GM_xmlhttpRequest({
+    //     method: method,
+    //     url: url,
+    //     data: data,
+    //     headers: {
+    //         "Referer": getLocation(),
+    //         'Accept-Charset': 'UTF-8',
+    //         "Content-Type": "application/x-www-form-urlencoded; charset=GBK",
+    //         "Cookie": document.cookie
+    //     },
+    //
+    //     onload: onSuccess,
+    //     onerror: onFailed
+    // });
 }
 
 let modalCurView = ""
