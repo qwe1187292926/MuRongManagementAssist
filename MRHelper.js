@@ -26,8 +26,6 @@
 // 0为工作日，1为休息日
 
 
-
-
 var nzhcn;
 !function (t, e) {
     nzhcn = e()
@@ -474,13 +472,13 @@ function setProductInfo(proId, rows, isSave = true) {
     $HTTP('post', 'https://mis.murongtech.com/mrmis/attProjectQuery.do',
         "search=&t=" + Date.now() + "&limit=10&offset=0&totalRows=2507&flag=1&pro_nm=" + proId,
         function (res) {
-            console.log(res,"res")
+            console.log(res, "res")
             let text = res
             res = JSON.parse(text)
             let data;
             try {
                 data = res.rec[0]
-            }catch (e){
+            } catch (e) {
                 notify(`获取项目信息失败：${res.gda.msg_inf}`)
                 return
             }
@@ -519,7 +517,7 @@ function setProductInfo(proId, rows, isSave = true) {
  * @param onFailed function
  */
 function $HTTP(method, url, data, onSuccess, onFailed) {
-    $.post(url,data,onSuccess);
+    $.post(url, data, onSuccess);
     // GM_xmlhttpRequest({
     //     method: method,
     //     url: url,
@@ -566,6 +564,7 @@ let getMRTable = () => {
 }
 
 function initStateCount() {
+    let amountADay = 60;
     let rows = getMRTable().bootstrapTable('getOptions').data;
     let date = []
     let count = 0
@@ -591,11 +590,11 @@ function initStateCount() {
         selectData += '<span>这个月没有加班哦~ 996可是打工人的福报啊</span></li>'
     }
     selectData += '<li xmlns="http://www.w3.org/1999/html"><span>当月出差天数：</span><input id="outWorkDate" type="number" value="' + count + '" />天</li>'
-    let amount = 80 * count
-    selectData += `<li id="lowerAmount"><span>当月出差金额：</span> 80元/天 * ${count}天 = ` + amount + '元</li>'
+    let amount = amountADay * count
+    selectData += `<li id="lowerAmount"><span>当月出差金额：</span> ${amountADay}元/天 * ${count}天 = ` + amount + '元</li>'
     selectData += '<li id="upperAmount"><span>当月出差金额大写：</span>' + nzhcn.toMoney(amount).replace('人民币', '') + '</li>'
     selectData += '<li><span></span></li>'
-    selectData += '<li><span>不知道其他等级的差补是多少钱，用的是我的80一天，有其他档位的欢迎email补充: 1187292926@qq.com</span></li>'
+    selectData += '<li><span>不知道其他等级的差补是多少钱，用的是我的' + amountADay + '一天，有其他档位的欢迎email补充: 1187292926@qq.com</span></li>'
     selectData += '</ul></div>'
     customMyModelView(selectData, curMonth + "状态统计")
 
